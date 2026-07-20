@@ -1,0 +1,100 @@
+site_name: Swift Mastery Path
+site_description: A structured, module-wise Swift training program from entry level to master level.
+site_url: https://sigilipelli.github.io/swift-mastery-path/
+repo_url: https://github.com/SIGILIPELLI/swift-mastery-path
+repo_name: swift-mastery-path
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - content.code.annotate
+    - search.suggest
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Privacy Policy: privacy.md
+  - "Level 1 · Entry":
+      - Overview: level-1/index.md
+      - "01 · Setup & First Program": level-1/01-setup.md
+      - "02 · Variables & Types": level-1/02-variables-types.md
+      - "03 · Control Flow": level-1/03-control-flow.md
+      - "04 · Functions": level-1/04-functions.md
+      - "05 · Optionals Basics": level-1/05-optionals-basics.md
+      - "06 · Collections": level-1/06-collections.md
+      - "07 · Structs & Classes Basics": level-1/07-structs-classes.md
+      - "08 · Enums": level-1/08-enums.md
+      - "09 · Closures Intro": level-1/09-closures-intro.md
+      - "10 · Project — CLI To-Do App": level-1/10-project-todo-cli.md
+  - "Level 2 · Intermediate":
+      - Overview: level-2/index.md
+      - "01 · OOP Deep Dive": level-2/01-oop-deep-dive.md
+      - "02 · Optionals Advanced": level-2/02-optionals-advanced.md
+      - "03 · Error Handling": level-2/03-error-handling.md
+      - "04 · Closures Advanced": level-2/04-closures-advanced.md
+      - "05 · Generics": level-2/05-generics.md
+      - "06 · Testing with XCTest": level-2/06-testing-xctest.md
+      - "07 · Working with JSON (Codable)": level-2/07-json-codable.md
+      - "08 · Swift Package Manager": level-2/08-swift-package-manager.md
+      - "09 · Property Wrappers Intro": level-2/09-property-wrappers.md
+      - "10 · Project — Weather CLI": level-2/10-project-weather-cli.md
+  - "Level 3 · Advanced":
+      - Overview: level-3/index.md
+      - "01 · Concurrency": level-3/01-concurrency.md
+      - "02 · Building Server-Side APIs (Vapor)": level-3/02-server-side-apis-vapor.md
+      - "03 · Databases": level-3/03-databases.md
+      - "04 · Design Patterns in Swift": level-3/04-design-patterns.md
+      - "05 · iOS Fundamentals": level-3/05-ios-fundamentals.md
+      - "06 · Testing Advanced": level-3/06-testing-advanced.md
+      - "07 · Memory Management": level-3/07-memory-management.md
+      - "08 · Performance & Profiling": level-3/08-performance-profiling.md
+      - "09 · Protocol-Oriented Programming": level-3/09-protocol-oriented-programming.md
+      - "10 · Project — REST API + Database Service": level-3/10-project-rest-api-db.md
+  - "Level 4 · Master":
+      - Overview: level-4/index.md
+      - "01 · Advanced Concurrency": level-4/01-advanced-concurrency.md
+      - "02 · Production Server-Side Swift": level-4/02-production-server-side-swift.md
+      - "03 · SwiftUI Fundamentals": level-4/03-swiftui-fundamentals.md
+      - "04 · Security Best Practices": level-4/04-security-best-practices.md
+      - "05 · Testing at Scale & CI": level-4/05-testing-at-scale-ci.md
+      - "06 · Deployment (Docker)": level-4/06-deployment-docker.md
+      - "07 · Performance at Scale": level-4/07-performance-at-scale.md
+      - "08 · Interop with C/Objective-C": level-4/08-interop-c-objc.md
+      - "09 · App Architecture Patterns": level-4/09-app-architecture-patterns.md
+      - "10 · Capstone Project": level-4/10-capstone-project.md
