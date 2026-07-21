@@ -4,5 +4,4 @@
     This module's full lessons and code snippets are being written next.
     Common design patterns idiomatic to Swift.
 
-Check the task ledger or ask your virtual employee for a status update on
-remaining content.
+More lessons are on the way — check back soon.
