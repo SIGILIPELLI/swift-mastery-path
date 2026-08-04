@@ -62,8 +62,19 @@ nav:
       - "08 · Enums": level-1/08-enums.md
       - "09 · Closures Intro": level-1/09-closures-intro.md
       - "10 · Project — CLI To-Do App": level-1/10-project-todo-cli.md
+  - "Level 2 · Intermediate":
+      - Overview: level-2/index.md
+      - "01 · OOP Deep Dive": level-2/01-oop-deep-dive.md
+      - "02 · Optionals Advanced": level-2/02-optionals-advanced.md
+      - "03 · Error Handling": level-2/03-error-handling.md
+      - "04 · Closures Advanced": level-2/04-closures-advanced.md
+      - "05 · Generics": level-2/05-generics.md
+      - "06 · Testing with XCTest": level-2/06-testing-xctest.md
+      - "07 · Working with JSON": level-2/07-json-codable.md
+      - "08 · Swift Package Manager": level-2/08-swift-package-manager.md
+      - "09 · Property Wrappers Intro": level-2/09-property-wrappers.md
+      - "10 · Project — Weather CLI": level-2/10-project-weather-cli.md
 # --- auto-pruned stub levels (see AdSense low-value-content fix) ---
 exclude_docs: |
-  level-2/*.md
   level-3/*.md
   level-4/*.md
