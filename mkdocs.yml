@@ -1,8 +1,8 @@
 site_name: Swift Mastery Path
 site_description: A structured, module-wise Swift training program from entry level to master level.
-site_url: https://sigilipelli.github.io/swift-skillmastery/
-repo_url: https://github.com/SIGILIPELLI/swift-skillmastery
-repo_name: swift-skillmastery
+site_url: https://sigilipelli.github.io/swift-mastery-path/
+repo_url: https://github.com/SIGILIPELLI/swift-mastery-path
+repo_name: swift-mastery-path
 
 theme:
   name: material
