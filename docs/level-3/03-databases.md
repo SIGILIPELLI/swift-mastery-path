@@ -177,6 +177,45 @@ makes their higher-level APIs (and their error messages) far less opaque.
 | Read a query row-by-row | `while sqlite3_step(stmt) == SQLITE_ROW { ... }` |
 | Release a statement | `sqlite3_finalize(stmt)` |
 
+## How It Actually Works
+
+**`sqlite3_prepare_v2` compiles SQL text into SQLite's own bytecode
+program**, run by a virtual machine internal to the SQLite library — the
+`OpaquePointer` you get back (`statement`) refers to that compiled program
+plus its execution cursor, not the raw SQL string. Every `sqlite3_step`
+call resumes that VM until it either produces a row (`SQLITE_ROW`) or
+finishes (`SQLITE_DONE`). This is why preparing once and stepping/binding
+repeatedly (e.g. for a batch of inserts, reusing the same prepared
+`statement` with `sqlite3_reset` between calls) is dramatically faster than
+re-preparing each time: parsing and query planning happen once, at
+`prepare_v2`, and every subsequent execution reuses the compiled bytecode.
+
+**Bind parameters are substituted into the bytecode program, never into the
+SQL text** — this is the actual mechanism behind "SQL injection is
+impossible with `?` placeholders." A string bound via `sqlite3_bind_text`
+is stored as opaque data in a VM register and compared/inserted as a value;
+it is never re-parsed as SQL syntax, so there is no way for a bound value
+containing `; DROP TABLE` to be interpreted as a second statement — it can
+only ever be literal text of the query the injected value would supply.
+Interpolating into the SQL string before `prepare_v2`, by contrast, hands
+attacker-controlled text to SQLite's parser as syntax.
+
+**`OpaquePointer` and manual memory ownership**: Swift's `SQLite3` module
+is a direct C interop layer, so none of ARC's automatic retain/release
+applies to `db` or `statement` — they're opaque C pointers to SQLite's own
+heap allocations, and SQLite (not Swift) owns their lifetime. `defer {
+sqlite3_finalize(statement) }` and `defer { sqlite3_close(db) }` exist
+because Swift's runtime has no way to know when these resources are no
+longer needed — unlike a Swift class instance, there's no reference count
+tracking who still points at the prepared statement.
+
+**`SQLITE_TRANSIENT` vs. the alternative `SQLITE_STATIC`** controls whether
+SQLite copies the bound string immediately or trusts it to remain valid for
+the statement's lifetime; passing a Swift `String`'s temporary C
+representation with `SQLITE_STATIC` would be a use-after-free the moment
+Swift deallocates that temporary buffer, which is why the module defaults
+to the safer (if slightly costlier) transient copy.
+
 ## Exercise
 
 Add an `age INTEGER` column to the `employees` table, insert a few rows

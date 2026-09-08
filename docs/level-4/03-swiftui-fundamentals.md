@@ -200,6 +200,41 @@ the array.
 | Style/layout a view | Chained modifiers (order matters) |
 | Render a dynamic collection | `List`/`ForEach` + `Identifiable` |
 
+## How It Actually Works
+
+- **A `View`'s `body` is not "the UI" — it's a lightweight, disposable value
+  describing what the UI should look like.** SwiftUI treats your `struct MyView:
+  View`'s `body` computed property as a pure function of its inputs (properties,
+  `@State`, `@Binding`, environment) — the framework calls it repeatedly
+  (potentially many times per second) and never mutates or reuses the returned
+  view value directly; it's recomputed fresh each time and diffed.
+- **Diffing works by view *identity*, not by reference equality.** SwiftUI
+  assigns each view in your hierarchy an implicit identity based on its type and
+  position in the view tree (or an explicit `.id(...)`/`ForEach` id you
+  provide). When `body` re-runs, SwiftUI walks the old and new view trees and
+  compares node-by-node at matching identities: if a node's *type* changed, the
+  old view (and any attached state) is torn down and a fresh one created; if
+  the type is the same, SwiftUI diffs the view's stored properties and only
+  updates the underlying platform view (UIView/NSView, or its own render tree)
+  for properties that actually changed — this selective re-rendering is the
+  entire performance model, and it's why `ForEach` needs stable, meaningful
+  `id`s: an unstable id makes SwiftUI think every element is brand new on every
+  update, discarding state and animating incorrectly.
+- **`@State` storage doesn't live in your view struct at all** (your view is
+  re-created constantly, so it can't). The compiler-inserted property-wrapper
+  storage for `@State` is actually persisted by the SwiftUI runtime in a
+  separate, identity-keyed storage table outside your view value — this is why
+  `@State` survives across `body` re-evaluations even though the `View` struct
+  itself is a fresh value every time, and why `@State` is documented as "only
+  for a view's own private, local state," not something you should initialize
+  from an outside parameter (the framework only initializes it once per
+  identity, ignoring later external re-initialization attempts).
+- **Every state change triggers invalidation, not immediate re-render**:
+  mutating an `@State`/`@ObservedObject`-published property marks the
+  associated view identity "dirty" and schedules a re-render on the next run
+  loop tick, batching multiple state changes in the same tick into a single
+  `body` re-evaluation rather than one per mutation.
+
 ## Exercise
 
 Sketch a SwiftUI `LoginView` with `@State private var username` and

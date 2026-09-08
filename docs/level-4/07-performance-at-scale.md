@@ -206,6 +206,37 @@ cleanly.
 | Batching | Per-call overhead is real (network, DB, actor hops) | Pure in-memory CPU work with no per-call cost |
 | `withTaskGroup` parallelism | Chunks are independent and individually substantial | Chunks are tiny, or depend on each other's results |
 
+## How It Actually Works
+
+- **Horizontal scaling interacts with Swift's cooperative-thread-pool
+  concurrency model per-instance, not cluster-wide** — each process instance
+  gets its own fixed-size cooperative pool sized to its container's visible
+  CPU count; over-provisioning CPU limits below what the pool detects (a common
+  container/cgroup misconfiguration) starves the pool and causes tasks to queue
+  even though "the pool" appears fine, which is a frequent, hard-to-spot source
+  of latency in containerized Swift services.
+- **Connection pool sizing must be tuned relative to the cooperative pool, not
+  just to the database's max-connections limit** — because request-handling
+  tasks suspend (not block a thread) while waiting on a pooled database
+  connection, you can safely serve far more concurrent in-flight requests than
+  you have OS threads, but only up to however many database connections the
+  pool actually holds; beyond that, additional requests queue for a database
+  connection to free up.
+- **Caching layers (in-memory `NSCache`/custom LRU vs. a shared cache like
+  Redis)** differ mechanically in cross-instance consistency: an in-process
+  cache is only visible to that one process's cooperative pool and is
+  invalidated by nothing but its own eviction policy or process restart, while
+  a shared external cache adds a network round trip per lookup but stays
+  consistent across every horizontally-scaled instance — the right choice
+  depends on whether staleness *within a single instance* is acceptable for
+  your data.
+- **Backpressure**: a `TaskGroup` or `AsyncStream` handling an unbounded influx
+  of work will happily keep queuing child tasks/buffered values if you don't
+  explicitly bound concurrency (e.g. capping how many tasks are added to a
+  group at once) — since tasks are cheap to create but not free, an unbounded
+  fan-out under real production load is a common way to exhaust memory or
+  database connections well before CPU becomes the bottleneck.
+
 ## Exercise
 
 Take the `processOneByOne`/`processBatched` comparison above and change

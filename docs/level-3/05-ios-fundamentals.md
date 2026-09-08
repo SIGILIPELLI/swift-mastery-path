@@ -178,6 +178,49 @@ for larger apps.
 | Layout | `NSLayoutConstraint` anchors | Stacks (`VStack`/`HStack`) + modifiers |
 | Push a screen | `navigationController?.pushViewController` | `NavigationLink` + `navigationDestination` |
 
+## How It Actually Works
+
+**SwiftUI's `View.body` doesn't mutate a live view tree — it produces a new
+lightweight value tree every time, and the framework diffs it.** A `View`
+in SwiftUI is a struct, not a `UIView`; each time state changes (a
+`@State`, `@Observable` property, or `scenePhase` change), SwiftUI calls
+`body` again to get a fresh description of what the UI *should* look like,
+then diffs the new tree against the previous one, node by node, using each
+view type's structural identity. Where two nodes are the "same" view at the
+same position, it computes the minimal set of underlying `UIView`/`CALayer`
+property updates rather than tearing down and rebuilding — this is why
+SwiftUI views are cheap to recreate (they're just structs) while the actual
+UIKit-backed render tree underneath changes only incrementally.
+
+**Identity, not equality, drives that diff.** SwiftUI infers identity from
+a view's position in the tree and its type by default (`Text`, `Toggle`,
+etc. at index 2 of a given parent are considered "the same view" across
+updates), which is exactly why `List(names, id: \.self)` with duplicate
+strings breaks: SwiftUI can no longer tell which row is which between
+diffs, so it may reuse/reorder the wrong row's underlying state. An
+`Identifiable` model with a genuinely unique `id` gives the diff algorithm
+a stable key independent of array position, so insertions/removals/reorders
+update the correct rows instead of ones that merely happen to sit in the
+same index.
+
+**`@Observable` (and its predecessor `@Published`/`ObservableObject`) work
+by instrumenting property access, not by watching the whole object.**
+`@Observable`'s macro-generated code registers a dependency only on the
+specific stored properties a view's `body` actually reads during that
+render pass; mutating an unread property later doesn't trigger a
+re-render of that view. This fine-grained tracking is why replacing a
+whole array-backed `TaskStore` naively (recreating it) triggers far more
+re-diffing than mutating a single tracked property in place.
+
+**The UIKit lifecycle underneath is still real.** `viewDidLoad` fires
+exactly once per `UIViewController` instance, right after its view is
+loaded into memory (which itself is lazy — accessing `.view` for the first
+time is what triggers `loadView`/`viewDidLoad`, not `init`); `scenePhase`
+transitions in SwiftUI are a declarative projection of the same
+`UIApplicationDelegate`/`UISceneDelegate` callbacks UIKit apps have always
+received, which is why `@UIApplicationDelegateAdaptor` lets you drop back
+into the AppDelegate world without SwiftUI and UIKit fighting each other.
+
 ## Exercise
 
 Sketch (don't need to run) a SwiftUI `TaskListView` backed by an

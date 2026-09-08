@@ -176,6 +176,34 @@ Executed 2 tests, with 0 failures in 0.002 seconds
 | `XCTAssertNoThrow(try f())` | Expression does not throw |
 | `setUp()` / `tearDown()` | Runs before/after every test method |
 
+## How It Actually Works
+
+- **XCTest discovers tests via runtime reflection**, not static analysis: on
+  Apple platforms it uses the Objective-C runtime's method-listing APIs to find
+  every method on an `XCTestCase` subclass whose name starts with `test` and
+  takes no arguments — this is why test method naming conventions matter
+  mechanically, not just by convention, and why Swift-only test targets on
+  Linux (via swift-corelibs-xctest) instead require you to explicitly list
+  tests in a `static var allTests` array, because there's no Objective-C runtime
+  to reflect over there.
+- **`XCTAssert*` failures don't throw or crash** — under the hood they call
+  `XCTestCase.recordFailure(...)`, an ordinary method that appends to the test
+  run's failure list and marks the current test as failed, then execution
+  *continues* to the next line in the same test method (unless you use the
+  `XCTUnwrap`-style helpers, which do throw to stop the method early on failure).
+  That's why one assertion failing doesn't automatically stop subsequent
+  assertions in the same test from also running and being reported.
+- **Test isolation**: each `XCTestCase` instance is freshly allocated per test
+  method (`setUp()`/`tearDown()` run around each one individually, not once per
+  class), specifically so that state mutated by one test can't leak into
+  another through shared instance properties — the framework re-instantiates
+  your whole test class for every single `test...` method it runs.
+- **Async tests (`async throws` test methods)** run the test method's suspend
+  points on whatever executor the test's task is scheduled on, and XCTest's
+  runner blocks the calling thread on a semaphore/continuation until that task
+  completes, so the surrounding synchronous test infrastructure doesn't need
+  its own async model.
+
 ## Exercise
 
 Write a small `struct Calculator` with `add`, `subtract`, and a throwing

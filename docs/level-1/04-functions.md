@@ -148,6 +148,34 @@ print(op(10, 4))   // 14
 | Mutate caller's variable | `func f(_ x: inout Int)` | Call with `f(&value)` |
 | Function type | `(Int, Int) -> Int` | Functions can be stored, passed, returned |
 
+## How It Actually Works
+
+- **Parameter labels vs. parameter names** exist only at the source and type-checking
+  level. By the time a function reaches SIL/LLVM, argument labels are erased —
+  `func greet(to name: String)` and a hypothetical unlabeled version compile to
+  the same calling convention. Labels are purely a call-site readability/overload
+  disambiguation feature, so they add zero runtime cost.
+- **Calling convention**: Swift functions pass small value types (structs that
+  fit in a couple of machine words, like `Int`, `Double`, small structs) directly
+  in registers, following the platform's Swift calling convention (distinct from
+  C's). Larger structs and any type containing a class reference or existential
+  are passed indirectly (by address) with the compiler inserting the necessary
+  copies — you don't write this, but it's why "just returning a struct" is
+  usually free while returning a huge struct can trigger a hidden memory copy.
+- **`inout` parameters** are implemented via a compiler-enforced technique called
+  "copy-in, copy-out" for computed properties and subscripts, but for plain
+  stored variables the compiler passes a real pointer directly — either way, the
+  exclusivity checker (`-enforce-exclusivity`) inserts a runtime or static check
+  that the same storage isn't accessed twice (e.g. through aliasing) while the
+  `inout` access is active, which is what makes `swap(&a, &a)`-style bugs a
+  runtime trap rather than silent corruption.
+- **Function values as first-class citizens**: a function name used as a value
+  (`let f = greet`) is packaged into a "thick function" representation — a
+  pointer to the function plus an optional context pointer for captured state —
+  which is exactly the same representation a closure uses (see the closures
+  chapter). A plain top-level function just happens to have a null context
+  pointer.
+
 ## Exercise
 
 Write a function `describe(number:)` that takes an `Int` and returns a

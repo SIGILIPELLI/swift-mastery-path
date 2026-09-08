@@ -181,6 +181,33 @@ than a threshold alone.
 | CI on every push/PR | GitHub Actions workflow, `runs-on: macos-14` |
 | Catch untested new code | `--enable-code-coverage` + `llvm-cov` |
 
+## How It Actually Works
+
+- **Parallelized test execution in Xcode/`xcodebuild`** works by spinning up
+  multiple test-runner processes, each hosting a full copy of your app under
+  test on a separate simulator instance (or a distinct process for
+  logic-only tests) — this is why tests sharing external mutable state (a
+  shared file, a shared singleton relying on disk/network) become flaky under
+  parallel execution: two runner processes have entirely separate address
+  spaces and app instances, but *can* still collide on a shared external
+  resource like a database or a well-known file path.
+- **Test result bundles (`.xcresult`)** are a structured, queryable
+  package — not a flat log — containing per-test timing, screenshots, and
+  attached diagnostic data as discrete records, which is what lets CI tooling
+  extract structured pass/fail/timing data programmatically (via
+  `xcrun xcresulttool`) rather than scraping human-readable console output.
+- **Build caching in CI** (derived data caching, module caches) relies on
+  content-addressed hashing of inputs (source files, compiler flags, SDK
+  version) — a cache hit requires an *exact* match across all of these, which
+  is why a CI cache that seems to "randomly" miss is often actually correctly
+  invalidating due to a subtle environment difference (Xcode version, SDK
+  patch version) between cache-writing and cache-reading jobs.
+- **Flaky test detection** in modern Xcode works by automatically re-running a
+  failed test a few times in isolation before reporting it as a genuine
+  failure — this re-run happens transparently in the test runner process, which
+  is why a test that fails once but passes on retry gets specially flagged
+  rather than silently reported as a flat pass.
+
 ## Exercise
 
 Write an `XCTestCase` subclass `RateLimiterTests` with `setUp`/`tearDown`

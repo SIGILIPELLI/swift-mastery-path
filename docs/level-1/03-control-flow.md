@@ -177,6 +177,31 @@ instead of only the innermost one.
 | `repeat-while` | Same as `while`, but body always runs once first |
 | `break` / `continue` | Exiting or skipping an iteration; add a label to target an outer loop |
 
+## How It Actually Works
+
+- **`switch` exhaustiveness** is enforced by the type checker, not by a runtime
+  fallthrough check: for enums, the compiler statically walks every case
+  declared in the type and refuses to compile unless every one is covered (or a
+  `default` is present). This is what lets you add a new enum case and get a
+  compiler error at every switch that needs updating — a huge refactoring safety
+  net that `if/else` chains don't give you.
+- **Pattern matching** (`case let x where ...`, tuple patterns, `.some(x)`) all
+  compile down to the same underlying mechanism: a sequence of conditional
+  branches in SIL that test a value's tag (for enums) or destructure a tuple's
+  fields directly from registers/stack slots — there's no dictionary lookup or
+  reflection involved, so a `switch` over an enum is typically as fast as a
+  hand-written `if` chain, sometimes faster because the compiler can build a
+  jump table when cases are dense integer-like tags.
+- **`for-in` loops** over a `Sequence` desugar to explicit `makeIterator()` /
+  `next()` calls under the hood — `for x in array` becomes a `while` loop pulling
+  from an `IndexingIterator`. Because `Array`'s iterator just walks a raw buffer
+  pointer, this compiles to a tight pointer-increment loop after optimization,
+  not a general-purpose "call next() and unwrap the Optional" pattern (the
+  optimizer inlines and eliminates that machinery entirely at `-O`).
+- **`where` clauses** on `for-in` and `switch` are evaluated per-iteration as a
+  plain boolean guard inserted into the generated branch — they don't change the
+  iteration strategy at all, they just add a skip test.
+
 ## Exercise
 
 Write a program that loops from 1 to 30. For each number, print `"Fizz"` if

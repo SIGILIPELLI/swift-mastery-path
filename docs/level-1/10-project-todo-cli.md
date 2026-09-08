@@ -211,6 +211,32 @@ invocations of the program — an enum-driven command parser, optionals for
 safe parsing, and a struct-based model come together into a small but
 realistic CLI tool.
 
+## How It Actually Works
+
+- **Reading `CommandLine.arguments`** is one of the few places Swift code
+  directly touches the C-style `argv`/`argc` the OS hands your process — the
+  standard library marshals that raw `char**` into a Swift `[String]` once, at
+  process start, by validating/copying each C string into Swift's native UTF‑8
+  backed `String` storage.
+- Persisting your todo list to a file (`FileManager`, `Data`, `JSONEncoder`)
+  round-trips through **`Codable`**'s reflection-free mechanism: the compiler
+  synthesizes `encode(to:)`/`init(from:)` methods at compile time by walking your
+  struct's stored properties (there's no runtime introspection like Objective-C's
+  `NSCoding` — it's ordinary generated Swift code you could have written by
+  hand), which is why adding a new stored property to your `Todo` struct
+  automatically participates in encoding/decoding without touching your I/O code.
+- **Struct value semantics make the "in-memory list" safe by construction**: your
+  `[Todo]` array can be freely passed to functions like `save(_:)` or
+  `filter(where:)` without worrying that a called function mutates your working
+  list out from under you — each call either gets its own copy-on-write
+  reference to the same buffer (cheap) or triggers an actual copy only if it
+  mutates while your original is still alive.
+- Command dispatch (`switch CommandLine.arguments[1]`) is the same enum/string
+  pattern-matching machinery from the control-flow chapter — string cases
+  compile to a sequence of `String.==` calls (itself a byte-wise/UTF-8-aware
+  comparison), not a hash lookup, unless the compiler judges a jump table
+  worthwhile for a large `switch`.
+
 ## Stretch goals
 
 - Add an `edit <n> <new title>` command that replaces a task's title.

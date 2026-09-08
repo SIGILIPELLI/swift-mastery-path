@@ -200,6 +200,47 @@ myArray` and `for x in mySet` both work with fully type-safe `x`.
 | Generic type | `struct Stack<Element> { ... }` | A reusable container/type, specialized per use |
 | `associatedtype` | `protocol Container { associatedtype Item }` | A placeholder type inside a protocol |
 
+## How It Actually Works
+
+**Generics in Swift are resolved through witness tables, not type
+erasure.** When you call `swapValues(&x, &y)` with `Int`, the compiler
+knows the concrete type at the call site and, in most cases, *specializes*
+the generic function — generating a dedicated machine-code copy of
+`swapValues` for `Int` at compile time (visible with whole-module
+optimization), identical in performance to hand-writing `swapInts`. This is
+why generics carry "zero runtime overhead for the abstraction": the
+abstraction is erased by the optimizer, not preserved and dispatched at
+runtime, in contrast to type-erased `Any`-based approaches.
+
+**Protocol constraints compile to a witness table, not a vtable.** `<T:
+Comparable>` doesn't give the function a class-style vtable pointer;
+instead, when full specialization isn't possible (a function in a
+separately-compiled module, called with a type not known until runtime),
+the compiler passes a hidden *value witness table* and *protocol witness
+table* alongside `T` — essentially a struct of function pointers for `T`'s
+size/alignment/copy behavior and its `Comparable` conformance (`<`, `==`,
+etc.). The generic function calls through those pointers instead of
+static dispatch. This indirection is what lets one compiled `largest<T:
+Comparable>` binary work across every `Comparable` type ever defined,
+including ones written after the generic function was compiled.
+
+**`associatedtype` is resolved the same way, one level up.** A protocol
+with an `associatedtype` can't be used as a standalone type (`Container`
+alone isn't a valid type annotation) because the compiler needs to know
+`Item`'s witness table to lay out calls through it — this is precisely why
+you write `some Container` or a generic `<C: Container>` constraint
+instead: both give the compiler a concrete `Item` to resolve at the call
+site, whereas a bare existential wouldn't carry the associated-type
+information needed to generate a witness table for it (Swift's `any
+Container` existential support for this is deliberately restricted for
+exactly this reason).
+
+**Why `Stack<Int>` and `Stack<String>` are called "specializations"**:
+each instantiation gets its own independently laid-out storage (an `[Int]`
+buffer vs. a `[String]` buffer, per the copy-on-write array mechanism), so
+there is no shared "generic Stack" object at runtime — only concrete,
+type-specific instances that happen to share one source definition.
+
 ## Exercise
 
 Write a generic function `func average<T: BinaryInteger>(_ values: [T]) ->

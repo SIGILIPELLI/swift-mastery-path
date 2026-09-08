@@ -161,6 +161,35 @@ query language (e.g. filtering on `status=unhealthy`) expects.
 | Liveness/readiness signal | A `HealthCheck` type exposing a small enum status |
 | Clean shutdown | `DispatchSource.makeSignalSource` for `SIGTERM`/`SIGINT` |
 
+## How It Actually Works
+
+- **Graceful shutdown handling** relies on registering a signal handler
+  (`SIGTERM`/`SIGINT`) that stops the SwiftNIO event loop group from accepting
+  new connections while letting in-flight requests' tasks run to completion
+  before the process actually exits — this is why a production server's
+  shutdown path is asynchronous itself (draining, not an immediate `exit()`),
+  and getting it wrong is a common source of dropped requests during
+  deployments.
+- **Environment-based configuration** (reading `ProcessInfo.processInfo.environment`)
+  is resolved once at process start — the OS hands your process a full
+  environment block at `exec()` time, and Swift's `ProcessInfo` is a thin
+  wrapper caching that snapshot, which is why environment variables changed
+  after your process starts (e.g. via a sibling shell) are never observed
+  without a restart.
+- **Logging backends (`swift-log`)** use a protocol-witness-based
+  "bootstrap once" pattern: `LoggingSystem.bootstrap(...)` installs a factory
+  closure exactly once (subsequent calls are ignored, enforced via an atomic
+  flag much like `static let`'s one-time initialization), and every `Logger`
+  instance created afterward calls through to whatever concrete backend that
+  factory produced — this indirection is what lets libraries log without
+  knowing or caring which concrete logging backend the final application
+  chooses.
+- **Health checks and readiness probes** typically hit a lightweight route
+  handled entirely on the event loop without touching the database pool,
+  specifically so that a probe never contends with real traffic for a pooled
+  connection under load — a subtlety worth getting right so a health check
+  doesn't itself become a bottleneck.
+
 ## Exercise
 
 Extend the `HealthCheck` type with a `queueDepth: Int` field and treat

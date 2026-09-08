@@ -207,6 +207,35 @@ print(decodeProduct(from: badData) ?? "decoding failed")
 | Optional/missing JSON field | Make the Swift property `Optional` |
 | Pretty-printed output | `encoder.outputFormatting = .prettyPrinted` |
 
+## How It Actually Works
+
+- **`Codable` synthesis happens entirely at compile time.** When your type
+  conforms to `Codable` and every stored property is itself `Codable`, the
+  compiler generates a hidden `CodingKeys` enum (one case per stored property,
+  matching each property's name) and writes literal `encode(to:)`/`init(from:)`
+  method bodies that loop over those keys — there's no runtime reflection
+  scanning your object's memory layout the way, say, Java or C# serialization
+  might. This is also exactly why renaming a property without providing a
+  custom `CodingKeys` mapping silently changes the JSON key it (de)serializes
+  to.
+- **`JSONDecoder`/`JSONEncoder` don't parse into your type directly.** They
+  first parse raw JSON bytes into an intermediate, type-erased representation
+  (effectively a tree of dictionaries/arrays/scalars), then your type's
+  generated `init(from:)` pulls values out of that tree keyed by
+  `CodingKeys`, converting each field via nested `decode(_:forKey:)` calls that
+  themselves recurse into `Codable` for nested types — which is why decoding
+  deeply nested JSON is proportional to the JSON's total node count, not free.
+- **`KeyedDecodingContainer` performs its key lookup through a `CodingKey`
+  protocol**, not raw string hashing on your struct's field names — this
+  indirection is what lets `.convertFromSnakeCase` key strategies transparently
+  rewrite the correspondence between JSON keys and Swift property names without
+  touching your generated code.
+- A decoding failure anywhere in the tree throws a structured `DecodingError`
+  (`.keyNotFound`, `.typeMismatch`, `.valueNotFound`, `.dataCorrupted`) carrying
+  a `codingPath` array — the decoder actively tracks the path of keys/indices
+  it's descended through so it can report exactly where in a large JSON
+  document things went wrong.
+
 ## Exercise
 
 Model this JSON with a `Codable` struct (use `CodingKeys` for the mismatched

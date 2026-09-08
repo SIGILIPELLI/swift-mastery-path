@@ -173,6 +173,42 @@ print(light)   // yellow
 | `CaseIterable` | `Suit.allCases` | Iterate every case automatically |
 | `mutating func` | Changes `self` to a different case | Requires the enum variable to be `var` |
 
+## How It Actually Works
+
+**An enum without associated values is just a small integer under the
+hood.** With ≤256 cases and no payload, Swift represents a value as a
+single byte holding a discriminator tag — `Direction.north` compiles to
+essentially the constant `0`. The compiler picks the smallest integer width
+that fits the case count, so simple enums are as cheap as a raw `Int8`, and
+`switch` over one compiles to a jump table, not a chain of comparisons —
+that's part of why exhaustiveness matters: the compiler is building a table
+sized to the case count, and a new case genuinely requires a new table
+entry, which is what it flags as a compile error.
+
+**Enums with associated values are tagged unions** — the same
+discriminator tag, plus enough storage for the *largest* case's payload.
+`NetworkResult`'s layout reserves space for a tag byte and the largest of
+`(String)`, `(Int, String)`, or nothing — every instance is sized for the
+worst case, with unused bytes for smaller cases. This is exactly what a C
+`union` with a manual tag field does, except the compiler generates and
+enforces the tag/switch correspondence for you, which is why you can't read
+`.success`'s `data` without going through a `switch` or `if case` — there's
+no type-safe way to know which payload variant is live except by checking
+the tag.
+
+**Indirect cases and recursion**: an enum case whose payload contains the
+enum itself (e.g. a `case node(value: Int, next: LinkedList)`) can't have a
+fixed size — the compiler would need infinite storage to lay it out
+directly. Marking the case (or the whole enum) `indirect` makes Swift box
+that case's payload on the heap and store just a pointer inline, exactly
+the same mechanism a class provides implicitly, opted into per-case.
+
+**Why `Optional` really is "just an enum"**: `Optional<Wrapped>.none` and
+`.some(Wrapped)` follow the identical tagged-union layout described above —
+which is also why `if let` and `switch` work uniformly across `Optional`
+and your own enums; they're the same runtime shape, not special-cased
+syntax.
+
 ## Exercise
 
 Model a vending machine with `enum VendingItem: String, CaseIterable { case soda, chips, candy }`

@@ -182,6 +182,35 @@ on a number less than 100 due to lost updates; the actor guarantees exactly
 | `actor` | Protecting mutable state shared across concurrent tasks |
 | `Task.sleep(nanoseconds:)` | Non-blocking delay inside async code |
 
+## How It Actually Works
+
+- **`async`/`await` doesn't create threads.** An `async` function's suspension
+  points (`await`) are compiled into an explicit **state machine**: the
+  compiler splits the function's body at each `await` into separate resumable
+  chunks, and calling an async function creates a heap-allocated "task frame"
+  that records which chunk to resume and what local state to restore. This is
+  fundamentally different from a callback closure — the compiler is doing the
+  continuation-passing transformation for you.
+- **Structured concurrency's `Task` runs on Swift's cooperative thread pool** —
+  a fixed-size pool sized around the number of CPU cores (not one thread per
+  task). When a task hits `await` and genuinely suspends (waiting on I/O, a
+  lock, or another task), it gives its thread back to the pool to run other
+  ready tasks, and is rescheduled onto *any* available thread when it resumes —
+  this is why you must never assume an `async` function resumes on the same
+  thread it suspended on.
+- **Actors enforce isolation via a serial executor**, not a lock. Every actor
+  has an implicit mailbox/serial queue; calling a method on an actor from
+  outside actually enqueues that call and `await`s the actor's executor
+  processing it, guaranteeing at most one piece of actor code runs at a time —
+  the compiler statically checks that you never touch actor-isolated state
+  without going through this `await`-gated path, catching data races at compile
+  time rather than requiring you to remember to lock.
+- **`Task { }`** captures the current actor/executor context implicitly and
+  schedules a new top-level unit of work on the cooperative pool; a child task
+  created inside a `TaskGroup` is tracked by its parent so that structured
+  concurrency can guarantee no task outlives its enclosing scope (cancellation
+  propagates down this same parent/child tree).
+
 ## Exercise
 
 Write an `actor BankAccount` with a private `balance: Int` starting at `0`

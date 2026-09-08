@@ -221,6 +221,38 @@ that line would never appear.
 | `unowned` | No, non-optional | A back-reference guaranteed to outlive the referencer |
 | `[weak self]` in a closure | Yes | A closure stored by `self` that also references `self` |
 
+## How It Actually Works (deeper mechanics)
+
+- **ARC is a compile-time analysis, not a runtime garbage collector.** The
+  compiler statically inserts `retain`/`release` calls (technically
+  `swift_retain`/`swift_release`, which atomically increment/decrement an
+  object's reference count stored in its heap header) at every point a strong
+  reference is created or destroyed — assignment, parameter passing, capture,
+  scope exit. There's no separate GC thread pausing your program; the cost is
+  paid inline, deterministically, exactly where the compiler decided a
+  retain/release was needed.
+- **The optimizer aggressively removes redundant retain/release pairs** —
+  if it can prove an object is already kept alive across a region (e.g. it's
+  a `let` local never escaping), it elides matching retain+release calls
+  entirely. This is why `-Onone` (debug builds) can be measurably slower for
+  ARC-heavy code than `-O` (release) — many retain/release calls debug builds
+  emit conservatively are provably unnecessary and get removed at `-O`.
+- **Weak references need a side table.** A plain strong reference count lives
+  directly in the object's heap header, but supporting `weak` (a reference that
+  can observe deallocation and self-zero to `nil`) requires an extra indirection:
+  the runtime allocates a side-table entry tracking both a strong count and a
+  separate "weak/unowned" count; the object's storage isn't actually freed until
+  *both* counts hit zero, so a lingering weak reference keeps a small side-table
+  allocation (not the object itself) alive slightly longer.
+- **Retain cycles** happen when two objects hold strong references to each
+  other — neither's count ever reaches zero, so `deinit` never runs and the
+  memory leaks for the process's lifetime. `weak`/`unowned` break the cycle by
+  having one side hold a reference that doesn't increment the strong count;
+  `unowned` additionally skips the side-table safety check entirely (assuming
+  you've proven the referenced object always outlives the reference), trading
+  a runtime trap-on-misuse safety net for a slightly cheaper, non-optional
+  reference.
+
 ## Exercise
 
 Model a `Parent`/`Child` pair where `Parent` holds `var children: [Child]`

@@ -160,6 +160,38 @@ Final price: 180.0
 | Observer | A protocol (`AnyObject`-constrained) + a list of subscribers |
 | Strategy | A protocol (or closure) stored as a property and swapped at runtime |
 
+## How It Actually Works
+
+- **Protocol-based patterns (Strategy, Observer) dispatch through the protocol
+  witness table**, not a vtable. Every concrete type conforming to a protocol
+  gets a compiler-generated witness table — an array of function pointers, one
+  per protocol requirement, pointing at that specific type's implementation.
+  Calling a method on a value typed as the protocol looks up the right
+  implementation through this table rather than through inheritance, which is
+  why completely unrelated types (a struct and a class, say) can both
+  implement the same "Strategy" protocol with zero shared ancestry — the
+  witness table is generated independently per conforming type.
+- **Singletons (`static let shared = ...`)** rely on Swift's compiler-enforced
+  guarantee that a `static let`'s initializer runs **exactly once, thread-safely**,
+  via a hidden `dispatch_once`-style atomic flag the compiler inserts
+  automatically — you get thread-safe lazy initialization without writing any
+  locking code yourself, which is different from other languages where a
+  singleton's thread safety is something you must hand-implement.
+- **Delegate pattern with `weak var delegate: SomeDelegate?`** needs its
+  protocol declared `AnyObject`-constrained specifically so the compiler can
+  store it as a `weak` reference — `weak` requires reference-counted storage
+  (a class or class-constrained existential), because weak references work by
+  registering into the referenced object's ARC side table (see the memory
+  management chapter), which only exists for class instances.
+- **Existential containers**: a variable typed as a protocol (not `some
+  Protocol`, but a bare `any Protocol` / plain protocol type) is stored as an
+  "existential container" — a fixed-size inline buffer (3 words) that either
+  holds a small conforming value directly or, if the value is too large,
+  a pointer to a heap-boxed copy, plus a pointer to that value's witness table.
+  This indirection is what protocol-typed variables/arrays cost over a
+  generic-constrained (`some Protocol`) alternative, which the compiler can
+  instead specialize and avoid the container entirely.
+
 ## Exercise
 
 Implement the Decorator pattern: define a `protocol Coffee { func cost() ->

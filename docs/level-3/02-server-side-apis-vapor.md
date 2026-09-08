@@ -201,6 +201,32 @@ todos.get("todos") { req async throws -> [Todo] in await store.all() }
 | Add middleware | `app.middleware.use(MyMiddleware())` |
 | Group routes | `app.grouped("api", "v1")` |
 
+## How It Actually Works
+
+- **Vapor is built on SwiftNIO**, an event-loop-based non-blocking I/O engine
+  modeled closely on Netty. Rather than one OS thread per connection, NIO runs a
+  small, fixed pool of `EventLoop`s (typically one per CPU core), each of which
+  multiplexes many simultaneous connections via the OS's epoll/kqueue readiness
+  APIs — a request's handling code runs *on* whichever event loop owns that
+  connection's socket, and must never block that thread (blocking one event
+  loop stalls every other connection scheduled on it).
+- **Routing** compiles your registered routes into a trie (prefix tree) keyed by
+  path components, so matching an incoming request's path against hundreds of
+  routes is a fast tree walk rather than a linear scan through registered
+  closures.
+- **Middleware chains** are literally nested closures built at startup: each
+  middleware wraps the next `Responder` in the chain, so a request flowing
+  through N middlewares is N nested (usually `async`) function calls before
+  reaching your route handler, and the response flows back out through the same
+  nesting in reverse — this is why middleware ordering changes both
+  request-side and response-side behavior.
+- **Vapor's async handlers integrate with NIO's `EventLoopFuture` and Swift
+  Concurrency's `async/await` via bridging shims** (`.get()` on a future
+  suspends the calling task until NIO's callback fires) — under load, the
+  actual database/network I/O still ultimately goes through NIO's non-blocking
+  event loop, with Swift Concurrency's task suspension layered on top as a
+  more ergonomic way to write the same non-blocking flow.
+
 ## Exercise
 
 Extend the `TodoStore`/routing example with a `DELETE /todos/:id` route that

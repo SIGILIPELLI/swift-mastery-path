@@ -180,6 +180,39 @@ scattered across views — is identical either way.
 | View | Rendering + user input | A view model |
 | Coordinator/Router | Navigation decisions | Route values, not views directly |
 
+## How It Actually Works
+
+- **MVVM's "reactive" update mechanism in SwiftUI is really just Combine's (or
+  Observation's) publisher/observer machinery feeding SwiftUI's own
+  identity-based diffing** (see the SwiftUI chapter) — a view model's
+  `@Published` property change synchronously notifies its `objectWillChange`
+  publisher, SwiftUI's `@ObservedObject`/`@StateObject` property wrapper
+  subscribes to exactly that publisher, and the notification simply marks the
+  dependent view's identity dirty for the next render pass; there's no
+  polling, and no direct method call from model to view.
+- **`@StateObject` vs `@ObservedObject` is a *lifetime* distinction enforced by
+  where the underlying storage lives** — `@StateObject` allocates and owns its
+  wrapped object in the same identity-keyed external storage `@State` uses (so
+  it survives the owning view's `body` re-evaluations and isn't recreated),
+  while `@ObservedObject` assumes the object is owned and passed in from
+  elsewhere; using `@ObservedObject` where `@StateObject` was needed causes the
+  object to be silently reallocated (losing its state) every time the parent
+  view re-renders, because there's no persistent storage backing it.
+- **The Observation framework (`@Observable`, modern Swift)** replaces Combine's
+  broad "notify on any published change" with **per-property dependency
+  tracking**: SwiftUI's rendering system records exactly which properties a
+  given view's `body` actually read during its last evaluation, and only
+  invalidates that view when one of *those specific* properties changes — a
+  meaningfully more precise (and often faster) invalidation model than
+  `ObservableObject`'s "any `@Published` property changed → everyone
+  observing this object re-renders" behavior.
+- **Dependency injection containers** in Swift architectures are, mechanically,
+  almost always just protocol-typed properties resolved through witness-table
+  dispatch (see the protocol-oriented programming chapter) — "the container"
+  itself is typically nothing more than a dictionary or a set of factory
+  closures mapping a protocol type to a concrete instance/factory, with no
+  special runtime support beyond ordinary Swift generics and protocols.
+
 ## Exercise
 
 Add a `SettingsViewModel` with a `@Published var isDarkModeEnabled: Bool`

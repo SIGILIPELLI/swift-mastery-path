@@ -206,6 +206,35 @@ where you can prove the lifetimes are locked together.
 | Non-escaping param (default) | `(() -> Void)` | Must be called before the function returns |
 | Escaping param | `(@escaping () -> Void)` | Can be stored and called after the function returns |
 
+## How It Actually Works
+
+- **`@escaping` closures stored in properties retain their captured context** —
+  if that context includes `self` (a class instance), the closure holds a
+  strong reference, and the object holds a strong reference to the closure
+  (through the property) — a genuine **retain cycle**, which is why `[weak self]`
+  matters mechanically, not just stylistically: it tells the compiler to
+  generate a capture that stores `self` as an `Unmanaged`/weak reference (via a
+  side table entry, see the ARC chapter) rather than a strong one, so the object
+  graph doesn't keep itself alive forever.
+- **Autoclosures (`@autoclosure`)** don't change what a closure *is* — they
+  change what the *call site* looks like. `func assert(_ condition: @autoclosure () -> Bool)`
+  causes the compiler to implicitly wrap whatever expression you pass in a
+  zero-argument closure at the call site, which is why `assert(x > 0)` reads
+  like a plain boolean expression but is actually lazily evaluated — the
+  expression `x > 0` is never computed unless `assert`'s body actually calls the
+  closure.
+- **Closures as function parameters get specialized per call site** when
+  possible: if the compiler can see the concrete closure passed at a call site
+  (no dynamic dispatch involved), it can inline the closure body directly into
+  the caller, eliminating the function-pointer indirection entirely — this is
+  why higher-order functions like `map`/`filter`/`reduce` used with closure
+  literals are typically just as fast as a hand-written loop after
+  optimization, despite looking more "functional."
+- **Capture lists (`[x = someExpr]`)** evaluate the right-hand expression
+  *immediately*, at closure-creation time, and store the result in the closure's
+  context — distinct from referencing `x` directly, which captures a reference
+  to the *variable* (and sees later mutations).
+
 ## Exercise
 
 Build a small `class Timer` with a stored `onFire: (() -> Void)?` and a

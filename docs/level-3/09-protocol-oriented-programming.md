@@ -207,6 +207,40 @@ Hello from Int
 | `extension P where Self: X` / `where Element: Y` | Conditional extension members |
 | `extension ExistingType: NewProtocol {}` | Retroactive conformance |
 
+## How It Actually Works
+
+- **Protocol extensions provide default implementations that are statically
+  (not dynamically) dispatched** unless the requirement is also declared in the
+  protocol itself. This is the single most-tripped-over mechanic in POP: if a
+  method exists *only* in a protocol extension (not listed as a protocol
+  requirement), calling it through a value typed as the concrete type resolves
+  at compile time directly to that default implementation — but calling it
+  through a value typed as the *protocol* (an existential) also resolves to the
+  same default, ignoring any same-named method a conforming type defines that
+  wasn't declared as a protocol requirement. Only requirements actually listed
+  in the `protocol { }` block get witness-table (dynamic) dispatch; everything
+  else added purely via extension is resolved statically like a regular
+  function overload.
+- **`associatedtype`** is what makes a protocol generic without generic syntax
+  — the compiler treats a protocol with associated types as a template; each
+  conforming type fills in the actual type, and Swift builds a specialized
+  witness table per conformance rather than one shared table, which is also
+  precisely why protocols with associated types can't be used as plain
+  existential types (`any Shape` won't compile if `Shape` has an
+  `associatedtype`) — there is no single fixed-shape witness table that could
+  represent every possible associated-type substitution simultaneously
+  (Swift's newer "primary associated types" and existential features relax
+  this in specific, still-constrained ways).
+- **`some Protocol` (opaque return types)** let the compiler know the *concrete*
+  return type at the call site (even though the caller's code doesn't spell it
+  out), so calls against it use direct witness-table dispatch resolved at
+  compile time with no existential container — this is why `some Protocol` is
+  generally faster than returning `any Protocol` for the same value.
+- **Protocol conformance can be retroactively added via extension** to types
+  you don't own (even stdlib types) because conformance is a purely
+  compile-time/witness-table concept attached at the point of declaration, not
+  baked into the type's own memory layout the way class inheritance is.
+
 ## Exercise
 
 Define a protocol `Flyable` with a default-implemented `func fly() ->

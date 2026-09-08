@@ -203,6 +203,39 @@ use `values`).
 | `Task.sleep` (thrown, not `try?`ed) | Propagating cancellation automatically during a wait |
 | `withThrowingTaskGroup` | Fanning out children where any failure should abort the group |
 
+## How It Actually Works
+
+- **`TaskGroup` builds an explicit parent/child task tree** at runtime: adding a
+  child task (`group.addTask { }`) registers it with the group's underlying
+  task record, and the group's `for await` iteration polls each child's result
+  as it completes — critically, if the group's own task is cancelled or exits
+  its scope (including via a thrown error), the runtime automatically walks
+  this tree and propagates cancellation to every still-running child, which is
+  the actual mechanism behind "structured concurrency guarantees no task
+  outlives its scope."
+- **Cancellation is cooperative, implemented as a checked flag, not a forced
+  interrupt.** Calling `task.cancel()` flips an atomic flag on that task's
+  shared state; nothing stops automatically. Code must explicitly check
+  `Task.isCancelled` or call `try Task.checkCancellation()` (which throws
+  `CancellationError`) at appropriate points — a tight non-async loop that
+  never checks cancellation will keep running forever regardless of being
+  "cancelled."
+- **Custom executors and `AsyncSequence`** — implementing an executor means
+  providing the low-level scheduling primitive Swift Concurrency's runtime
+  calls into to actually run a job (typically wrapping your own thread/queue).
+  `AsyncSequence`'s `for await` loop compiles to repeated calls to
+  `makeAsyncIterator()`/`next()`, each an `async` call that can genuinely
+  suspend the consuming task until the next element becomes available — the
+  same state-machine transformation underlying every `async` function applies
+  here too, just invoked in a loop.
+- **`@MainActor` isolation** is enforced identically to any other actor
+  isolation (see the concurrency chapter) — code marked `@MainActor` runs on a
+  specific global-actor-owned serial executor that happens to be backed by the
+  main thread/run loop, and calling it from off-main-thread code requires an
+  `await` hop that the compiler statically enforces, catching "touched UI from
+  a background thread" bugs at compile time instead of as an intermittent
+  crash.
+
 ## Exercise
 
 Write an `AsyncSequence` called `Paginated<Element>` that simulates fetching

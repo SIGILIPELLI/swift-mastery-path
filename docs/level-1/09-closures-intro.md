@@ -124,6 +124,33 @@ print(hottest)   // 100
 | Shorthand args | `{ $0 + $1 }` |
 | Trailing closure | `numbers.sorted { $0 < $1 }` |
 
+## How It Actually Works
+
+- A closure that captures variables from its enclosing scope is compiled into
+  two things: a **function pointer** to the compiled closure body, and a
+  **context object** on the heap holding the captured variables — together this
+  is a "thick" closure, twice the size of a plain function pointer (one word for
+  the code pointer, one for the context pointer).
+- **Capture semantics matter mechanically, not just semantically.** When you
+  write `{ [weak self] in ... }` or capture a `var` by reference (the default for
+  closures that mutate an outer variable), the compiler actually allocates a
+  small heap **box** to hold that variable, and both the outer scope and the
+  closure hold a reference to the *same box* — this is why two closures that
+  both capture the same local `var` see each other's writes, and why capturing a
+  loop variable historically needed care (modern Swift creates a fresh capture
+  per iteration by default, avoiding the classic "closures over loop variables"
+  bug from other languages).
+- **`@escaping`** exists because the compiler needs to know, at the call site,
+  whether a closure's context (and anything it captures, including `self`) must
+  survive past the function call that received it. A non-escaping closure's
+  context can safely live on the stack and be deallocated when the function
+  returns; marking a parameter `@escaping` forces the compiler to heap-allocate
+  the context and retain any captured class references for as long as the
+  closure itself is retained (e.g. stored in a property, or scheduled on
+  `DispatchQueue`).
+- Trailing closure syntax (`array.map { ... }`) is pure syntax sugar resolved at
+  parse time — it has zero runtime distinction from `array.map({ ... })`.
+
 ## Exercise
 
 Write a function `makeMultiplier(factor: Int) -> (Int) -> Int` that returns a

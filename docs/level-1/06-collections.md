@@ -127,6 +127,46 @@ let studentsBySubject: [String: [String]] = [
 print(studentsBySubject["Math"] ?? [])   // ["Ada", "Alan"]
 ```
 
+## How It Actually Works
+
+**Copy-on-write (COW) is not a language feature — it's a data structure
+technique the standard library implements itself.** `Array`, `Set`, and
+`Dictionary` are all thin Swift structs that wrap a single property: a
+pointer to a heap-allocated buffer holding the actual elements, plus a
+reference count on that buffer (via Swift's normal class reference
+counting, since the buffer is a private class instance under the hood).
+`var a = [1, 2, 3]; var b = a` copies the *struct* — 8 bytes, one pointer —
+not the buffer. Both `a` and `b` now point at the same buffer, and its
+retain count is 2.
+
+The copy only actually happens the moment you mutate one of them. Every
+mutating method (`append`, `remove`, subscript assignment, ...) starts with
+`isKnownUniquelyReferenced(&buffer)` — a runtime check on the buffer's
+retain count. If it's 1 (nobody else points at it), the buffer is mutated
+in place: no allocation, no copy. If it's >1 (as with `a`/`b` above), the
+buffer is copied *first*, `b`'s pointer is repointed at the new copy, and
+*then* the mutation happens on the new buffer. This is why `b.append(4)`
+leaves `a` at `[1, 2, 3]` while `b` becomes `[1, 2, 3, 4]` — value
+semantics are preserved, but the cost of the copy is deferred until it's
+actually needed, and skipped entirely if it never is.
+
+**`Array` growth** works the same way as `ArrayList`/`std::vector`:
+appending past the buffer's capacity allocates a new buffer at roughly 2x
+the old capacity and moves every element over — this is why `reserveCapacity`
+matters for large known-size arrays (it avoids the O(log n) reallocations),
+and why `append` is amortized O(1) rather than worst-case O(1).
+
+**`Dictionary` and `Set`** are open-addressed hash tables. Every key must
+be `Hashable`; Swift computes `hashValue` via `hasher.combine`, mixes it
+with a per-process random seed (to make hash-flooding attacks
+non-deterministic across runs), and uses the result to pick a bucket. A
+collision probes forward to the next open bucket rather than chaining, which
+is why `contains`/subscript lookup is O(1) *on average* but degrades if the
+hash function distributes poorly. This is also the mechanical reason
+iteration order is unspecified: it reflects bucket layout, not insertion
+order, and can change across insertions/removals or even across process
+runs due to the random seed.
+
 ## Exercise
 
 Given `let words = ["swift", "is", "expressive", "and", "safe"]`, use `map`

@@ -200,6 +200,38 @@ following `GET` shows it persisted.
   version would add (real `Codable` JSON, connection keep-alive, more
   routes).
 
+## How It Actually Works
+
+Pulling the whole stack together for a capstone project means several of the
+mechanisms from earlier chapters are now operating simultaneously, and worth
+being explicit about how they interact:
+
+- **Concurrency + ARC**: every `Task`/actor hop that crosses a class boundary
+  triggers real retain/release traffic on captured references — in a
+  capstone-scale app with many concurrent tasks touching shared model objects,
+  this atomic increment/decrement cost (not raw CPU work) is often the first
+  thing a profiler surfaces, which is why structuring shared state behind
+  actors (serializing access, and often letting the compiler prove fewer
+  retains are needed) tends to outperform naive "wrap everything in a class and
+  pass it around" designs.
+- **SwiftUI's view-identity diffing interacting with async data loading**: a
+  view that kicks off an `async` fetch in `.task { }` and updates `@State` on
+  completion relies on the view *surviving* (same identity) across the
+  suspension — if the view is torn down and recreated (e.g. due to a parent's
+  `ForEach` id churn) while the fetch is in flight, the `.task` modifier
+  automatically cancels the in-flight task tied to the old identity, which is
+  a deliberate structured-concurrency safety feature, not a bug, but a common
+  source of "why did my fetch just silently stop" confusion if you don't know
+  to look for it.
+- **End-to-end error handling** across network → decode → persistence →
+  UI layers strings together the same cheap error-register propagation from
+  the error-handling chapter at every `throws`/`async throws` boundary, with
+  each layer's `catch` translating a lower-level error type into one
+  meaningful at its own layer — a well-architected capstone typically has 2-3
+  distinct error domains (network, decoding, persistence) explicitly mapped
+  into a single app-facing error type at the boundary where the UI consumes
+  them, rather than leaking raw `URLError`/`DecodingError` all the way up.
+
 ## Stretch goals
 
 - Add a `DELETE /notes/:id` route that also requires a valid `X-Signature`

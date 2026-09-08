@@ -138,6 +138,33 @@ print(window.count)   // used directly, no "!" or "?" needed -- 11
 | Optional chaining | `value?.property` | Safely reach through a chain of optionals |
 | Implicitly unwrapped | `String!` | Rare; auto-unwraps, still crashes if `nil` |
 
+## How It Actually Works
+
+- `Optional<T>` is not compiler magic — it is a plain **generic enum** in the
+  standard library with two cases, `.some(Wrapped)` and `.none`. `nil` is just
+  syntactic sugar for `.none` resolved through `ExpressibleByNilLiteral`.
+- For most types, the enum is *not* free: it needs an extra tag bit somewhere to
+  distinguish "no value" from "a value." Swift's compiler exploits **spare bit
+  optimization**: for a class reference, the pointer can never legitimately be
+  all zero bits at the represented range, so the compiler reuses an otherwise
+  invalid bit pattern to represent `.none`, making `Optional<SomeClass>` the
+  exact same size as the raw pointer — no extra memory, no extra branch beyond a
+  bit test.
+- **Force-unwrap (`!`)** compiles to a runtime check (`swift_unexpectedError`-style
+  trap) that calls `fatalError`-equivalent machinery if the enum's tag is
+  `.none` — this is why a force-unwrap crash shows a real stack trace and not
+  undefined behavior; Swift always checks first.
+- **Optional chaining (`?.`)** compiles into a short-circuiting sequence of
+  conditional branches at the SIL level, functionally identical to writing
+  nested `if let` yourself — the compiler builds one implicit "did any link in
+  the chain return nil" flag and threads it through, rather than doing anything
+  exotic.
+- **`??` (nil-coalescing)** is a regular function overloaded on `Optional`,
+  `@autoclosure`-annotated on its right-hand side so the default expression is
+  only evaluated (lazily) when the left side is actually `.none` — that's why
+  `value ?? expensiveFallback()` doesn't pay for `expensiveFallback()` on the
+  happy path.
+
 ## Exercise
 
 Write a function `parseAge(_ input: String) -> Int?` that uses `Int(input)`

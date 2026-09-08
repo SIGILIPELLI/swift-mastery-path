@@ -201,6 +201,34 @@ even though the type itself is visible.
 | `internal` (default) | Visible within the module only |
 | `public` | Visible to importing modules |
 
+## How It Actually Works
+
+- **`Package.swift` is not a config file — it's executable Swift code.** When
+  you run `swift build`, SwiftPM first *compiles and runs* your manifest as a
+  standalone program (linked against the `PackageDescription` library matching
+  your declared `swift-tools-version`) to produce the actual package
+  description as data. This is why different `swift-tools-version` values can
+  expose entirely different manifest APIs — you're really selecting which
+  version of the `PackageDescription` module your manifest links against.
+- **Dependency resolution builds a directed graph** of package requirements
+  (version ranges, branch/commit pins) and solves it with a SAT-like algorithm to
+  find a single version per dependency that satisfies every package's
+  constraints simultaneously — the result is pinned into `Package.resolved` so
+  every subsequent build/CI run resolves identically without re-solving
+  (SwiftPM only re-runs the solver when the manifest's declared requirements
+  change or you explicitly ask it to update).
+- **Build planning**: SwiftPM computes a full dependency-ordered build graph of
+  targets (a target can only depend on targets/products declared explicitly, no
+  implicit cross-target visibility), then invokes `swiftc`/the linker per
+  target, module by module — each target compiles into its own `.swiftmodule`
+  (a serialized AST/interface file), which downstream targets import instead of
+  re-parsing that target's source, dramatically speeding up incremental builds.
+- **Test targets** get compiled into a separate executable/bundle linked
+  against XCTest and every target under test, which is why an internal
+  (non-`public`) symbol is visible to `@testable import` — that annotation
+  tells the compiler to relax access control for that one imported module in
+  the test binary only.
+
 ## Exercise
 
 Run `swift package init --type executable` for a package named

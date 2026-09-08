@@ -270,6 +270,32 @@ the following `GET` reflects.
   a demo, but a production server keeps connections open (HTTP/1.1
   keep-alive) for efficiency.
 
+## How It Actually Works
+
+- **The request lifecycle runs on an event loop, not a thread-per-request
+  model** (see the Vapor/SwiftNIO chapter) — your route handler's `async`
+  database call suspends the current task rather than blocking the event loop's
+  thread, letting that same OS thread continue servicing other in-flight
+  requests while waiting on the database round trip.
+- **Database driver connection pooling** hands each request a connection
+  checked out from a fixed pool (rather than opening a new TCP connection per
+  request), and returns it to the pool when the request's `async` work
+  completes or throws — pool exhaustion under load manifests as requests
+  suspending longer (waiting for a free connection), not as new connections
+  being opened, which is a common source of confusing latency spikes under
+  load testing.
+- **`Codable` models mapping directly to database rows** rely on the same
+  compiler-synthesized encode/decode machinery as JSON (see the Codable
+  chapter) — a typical ORM-style layer decodes a raw row (column name/value
+  pairs) into your model the same way `JSONDecoder` decodes a JSON object,
+  just swapping the underlying `KeyedDecodingContainer` implementation for one
+  backed by SQL row data instead of parsed JSON.
+- **Error propagation from database driver → business logic → HTTP response**
+  uses the same cheap error-register mechanism as any other Swift `throws`
+  call chain — no exception unwinding cost accumulates as an error bubbles
+  from a low-level database error type up through several `async throws`
+  layers to becoming an HTTP error response.
+
 ## Stretch goals
 
 - Add a `GET /employees/:id` route (parse the id out of the path) and a

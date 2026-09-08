@@ -185,6 +185,32 @@ required extra parameters with no defaults), the memberwise initializer can
 disappear entirely, forcing you to write `init` by hand — always check by
 trying to construct the type after adding a wrapper.
 
+## How It Actually Works
+
+- A property wrapper is pure **compiler desugaring** — `@Wrapper var x: Int = 5`
+  is rewritten by the compiler into a hidden stored property `_x: Wrapper<Int>`
+  initialized as `Wrapper(wrappedValue: 5)`, plus a computed property `x` whose
+  getter/setter simply forward to `_x.wrappedValue`. Nothing about this is
+  runtime magic — you could write the exact same expansion by hand, and you can
+  even see it by inspecting the compiler's generated interface.
+- **`projectedValue` and the `$` prefix** work the same way: `$x` desugars to
+  `_x.projectedValue`, a second computed property the compiler synthesizes only
+  if your wrapper type declares a `projectedValue`. This is purely a naming
+  convention the compiler recognizes (the leading `$`), not a separate language
+  feature.
+- **Memberwise initializer interaction**: because a wrapped property is
+  secretly backed by a *different* stored property type (`Wrapper<Int>`, not
+  `Int`), the compiler's synthesized memberwise initializer for a struct with
+  wrapped properties takes the *wrapped* type as its parameter by default
+  (calling the wrapper's `init(wrappedValue:)`) — unless the wrapper doesn't
+  provide that initializer, in which case no memberwise init is synthesized at
+  all, which is the "trap" this chapter's example demonstrates.
+- **SwiftUI's `@State`/`@Binding`/`@ObservedObject`** are just property wrappers
+  built on this exact same compile-time mechanism, layered with runtime storage
+  that ties into SwiftUI's own diffing/invalidation system (see the SwiftUI
+  chapter) — there's no separate "SwiftUI property" language feature, only this
+  general-purpose wrapper mechanism used to build framework-specific behavior.
+
 ## Exercise
 
 Write a property wrapper `@propertyWrapper struct Uppercased` that stores a

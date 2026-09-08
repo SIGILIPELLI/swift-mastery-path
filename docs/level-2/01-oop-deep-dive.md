@@ -263,6 +263,34 @@ final class Configuration {
 | `Protocol & Protocol` | A function needs to accept "anything that can do both X and Y" |
 | `final` | You want to lock a class against subclassing, or a method against overriding |
 
+## How It Actually Works
+
+- **Method dispatch for classes is virtual by default.** Every non-`final`,
+  non-`private` class method is invoked through a **vtable** (virtual dispatch
+  table) — a per-class array of function pointers built at compile time, one
+  slot per overridable method, inherited and possibly overridden down the class
+  hierarchy. Calling `animal.makeSound()` compiles to: load the object's
+  isa/metadata pointer, index into its vtable at the `makeSound` slot, call
+  through that pointer. This indirection is what makes overriding work, and it's
+  also strictly more expensive than a direct call (no inlining across the call,
+  extra pointer chase) — which is why marking a class or method `final` lets the
+  optimizer devirtualize it into a direct, potentially inlined call.
+- **Designated vs. convenience initializers** encode a compiler-checked
+  initialization chain: a designated initializer must call a superclass
+  designated initializer (or fully initialize all of its own class's stored
+  properties) before doing anything else; a convenience initializer must
+  delegate to another initializer *in the same class*. The compiler statically
+  verifies "two-phase initialization" — phase 1 walks up the chain setting every
+  stored property in every class in the hierarchy; phase 2 walks back down
+  running `didSet`s, calling further methods, and letting you use `self` freely
+  — so that no class can ever observe another class's partially-initialized
+  state.
+- **Overriding and `super.method()`** calls resolve at compile time to a direct,
+  non-virtual call into the specific superclass implementation (bypassing the
+  vtable lookup entirely) — `super` calls are one of the few places the compiler
+  intentionally skips dynamic dispatch, because the target is always
+  statically known.
+
 ## Exercise
 
 Define a protocol `Payable` with a computed property `amountDue: Double` and

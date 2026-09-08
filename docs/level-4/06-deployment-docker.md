@@ -145,6 +145,33 @@ pulled out of a load balancer's rotation without a human noticing first.
 | Exclude files from the build context | `.dockerignore` |
 | Let the orchestrator poll liveness | `HEALTHCHECK` directive |
 
+## How It Actually Works
+
+- **Swift's Linux Docker images ship a full separate toolchain and runtime**
+  from Apple platforms — `libswiftCore` and friends are built against glibc
+  (not Apple's OS-provided Swift runtime), which is why a Swift binary built on
+  macOS cannot simply run in a Linux container: the ABI, the C standard library
+  it links against, and even some standard library behaviors (Foundation's
+  Linux implementation is a from-scratch reimplementation of parts of Apple's
+  Foundation) all differ.
+- **Multi-stage Docker builds matter for size specifically because of static
+  vs. dynamic linking of the Swift runtime.** A "builder" stage with the full
+  Swift toolchain (compiler, SDKs) is typically several GB; the final runtime
+  stage only needs the compiled binary plus (if dynamically linked) the
+  runtime's shared libraries — copying just those out via a multi-stage build
+  is what gets a production image down from gigabytes to tens of megabytes.
+  Static linking (`--static-swift-stdlib`) instead bakes the runtime into the
+  binary itself, trading a larger single binary for zero shared-library
+  dependency at deploy time (useful for minimal/distroless final images).
+- **Container health checks and orchestrator-driven restarts** interact with
+  Swift's process model directly: an uncaught `fatalError`/force-unwrap crash
+  terminates the whole process (there's no per-request isolation the way a
+  worker-process web server might have), which is exactly why a crash in one
+  request handler under something like Vapor takes down the entire container's
+  traffic until the orchestrator restarts it — a strong argument for
+  aggressively validating input at the edges rather than relying on
+  force-unwraps deep in request-handling code.
+
 ## Stretch goals
 
 - Extend the Dockerfile above to build the REST API + Database project from

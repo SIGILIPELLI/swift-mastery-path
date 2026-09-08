@@ -124,6 +124,33 @@ print("\(code): \(text)")          // 200: OK
 | `Bool` | `let x = true` | `true`/`false` only, no truthy/falsy values |
 | `(T, U, ...)` | `let x = (1, "a")` | Tuple — compound, unnamed type |
 
+## How It Actually Works
+
+`let` and `var` aren't just a style preference — the compiler treats them as
+different capabilities on the same storage:
+
+- A `let` binding is checked at **compile time** for single-assignment. The
+  compiler's SIL-level definite-initialization pass proves every `let` is
+  assigned exactly once along every code path before first use; this is a static
+  proof, not a runtime lock, so it costs nothing at runtime.
+- Swift's **type inference** doesn't guess — it runs a constraint-solving pass
+  (part of the type checker) that unifies the type of the right-hand expression
+  with the variable's type variable. This is also why deeply nested expressions
+  (chained `+`, closures, literals) can make compile times explode: the solver's
+  search space grows combinatorially with ambiguity, which is why Swift sometimes
+  asks you to add an explicit type annotation to "help" it.
+- Numeric and string **literals** (`42`, `3.14`, `"hi"`) aren't typed until the
+  context forces them — they conform to `ExpressibleByIntegerLiteral`,
+  `ExpressibleByFloatLiteral`, `ExpressibleByStringLiteral`, and the compiler
+  calls the appropriate `init(literal:)` for whatever concrete type the literal
+  ends up bound to. That's why `let x: Int8 = 5` and `let y: Double = 5` both
+  compile from the same literal `5`.
+- **String interpolation** compiles to calls against
+  `ExpressibleByStringInterpolation` and `StringInterpolationProtocol` —
+  `"\(name)"` desugars into a sequence of `appendLiteral` / `appendInterpolation`
+  calls building a `String.StringInterpolation` buffer, not naive string
+  concatenation.
+
 ## Exercise
 
 Declare constants for a person's `name` (String), `age` (Int), and `height`

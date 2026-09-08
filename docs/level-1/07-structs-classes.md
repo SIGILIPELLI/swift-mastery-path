@@ -151,6 +151,40 @@ structs, Swift uses protocols and extensions instead (covered in
 | Typical use | Most data models: points, records, configs | Shared, identity-based objects; UI controllers |
 | Default choice | **Yes, start here** | Only when you need reference semantics or inheritance |
 
+## How It Actually Works
+
+This is the single most consequential design decision in Swift, and the two
+kinds compile to genuinely different machine-level behavior:
+
+- **Structs are copied by value at assignment**, but the compiler doesn't
+  necessarily emit a real memcpy every time. For simple structs like `Point`
+  above (two `Double`s), an assignment `let p2 = p1` really is a bit-for-bit copy
+  of 16 bytes — cheap, stack-allocated, no heap traffic, no ARC involved at all.
+  Structs containing only other value types (numbers, other structs, enums) need
+  no reference counting whatsoever; the compiler can prove there's nothing to
+  retain/release.
+- **Classes are always heap-allocated and reference-counted.** `let obj2 = obj1`
+  copies a pointer, not the object, and the compiler inserts a `retain` call at
+  that copy and a matching `release` when `obj2`'s scope ends (see the memory
+  management chapter for ARC's full mechanics). Two variables pointing at the
+  same class instance observe each other's mutations — that's reference
+  semantics, and it's a direct consequence of both variables holding the same
+  heap address.
+- **Structs containing a class reference or an array/dictionary/string** are
+  where it gets subtle: the struct itself copies its fields, but if one of those
+  fields is a class reference, the copy duplicates the *pointer*, not the
+  pointed-to object — so two "independent" struct copies can still observe
+  mutations through a shared class field. `Array`, `String`, and `Dictionary`
+  solve this differently via copy-on-write (their internal storage buffer is
+  only actually duplicated the moment one copy is mutated while another
+  reference to the same buffer is still alive — checked via `isKnownUniquelyReferenced`
+  on the buffer's own reference count).
+- **Memberwise initializers** are synthesized by the compiler only for structs
+  (and only when you don't write your own `init`), because the compiler can
+  trivially prove the exact field layout needed; classes never get this for free
+  because inheritance means the "complete" set of fields isn't knowable purely
+  from the class's own declaration.
+
 ## Exercise
 
 Define a `struct BankAccount` with a `var balance: Double`, and `mutating`

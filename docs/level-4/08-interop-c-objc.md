@@ -187,6 +187,37 @@ KVC value(forKey:): Swift
 | Enable KVO/KVC on a property | `@objc dynamic var` on an `NSObject` subclass |
 | Bridge `String` ↔ `NSString` | `as String` / `as NSString`, transparently |
 
+## How It Actually Works
+
+- **Swift/C interop works because Swift's calling convention is largely
+  compatible with C's at the ABI level for simple types** — a C function
+  imported via a bridging header or module map is called almost directly, with
+  the compiler generating thin marshaling code only where representations
+  differ (e.g. Swift's `String` must be converted to/from a C `char*` via
+  explicit UTF-8 encoding/decoding, since Swift's `String` is not
+  null-terminated bytes internally).
+- **Objective-C interop relies on the shared Objective-C runtime.** A Swift
+  class marked `@objc`/inheriting from `NSObject` gets an Objective-C-compatible
+  class structure (isa pointer, method list) generated alongside its normal
+  Swift vtable — this dual representation is what lets Objective-C code call
+  Swift methods via `objc_msgSend` (Objective-C's dynamic, selector-based
+  dispatch, distinct from Swift's own vtable/witness-table dispatch) while
+  Swift code calling the same method uses the faster, direct Swift-native path.
+- **Bridging value types (`NSString`↔`String`, `NSArray`↔`Array`)** is not
+  always a real copy — Swift's `String` and `Array` implement "bridging"
+  interfaces so that, in many cases, an `NSString`/`NSArray` can be wrapped
+  rather than deep-copied, deferring an actual copy until (or unless) it's
+  genuinely needed, following the same copy-on-write philosophy used elsewhere
+  in Swift's standard library.
+- **Manual memory management at the boundary** (`Unmanaged<T>`,
+  `withUnsafePointer`, `UnsafeMutablePointer`) exists specifically because ARC's
+  automatic retain/release insertion only understands Swift-managed references
+  — when a C API expects to own a pointer itself (e.g. a callback context
+  pointer), you must explicitly opt an object out of ARC's automatic counting
+  (`Unmanaged.passRetained`/`.takeRetainedValue`) and take responsibility for
+  balancing the retain count yourself, exactly at the seam where ARC's
+  compile-time analysis can no longer see how the reference is used.
+
 ## Exercise
 
 Write a small C-interop demo that uses `UnsafeMutablePointer<Int32>` (via

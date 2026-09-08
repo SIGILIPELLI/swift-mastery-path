@@ -180,6 +180,33 @@ silently skipped — exactly the safe-by-default behavior `as?` is for.
 | `!` | Force-unwrap | **Yes**, if `nil` |
 | `as!` | Force-downcast | **Yes**, if the cast fails |
 
+## How It Actually Works
+
+- **`guard let`** doesn't just unwrap — it's a control-flow construct the
+  compiler treats specially for **definite initialization and scope**: the
+  unwrapped binding is available for the *rest of the enclosing scope* (unlike
+  `if let`, whose binding is scoped to the `if` body only) precisely because the
+  compiler can statically prove every path that doesn't `return`/`break`/`throw`
+  in the `else` branch guarantees the value was non-nil going forward.
+- **Optional map/flatMap** are ordinary generic functions on `Optional`, not
+  special syntax — `optionalValue.map { $0 * 2 }` compiles to a check-and-call:
+  branch on the enum tag, and only invoke the closure in the `.some` case,
+  wrapping its result back into `.some`. `flatMap` is identical except it
+  expects the closure to already return an `Optional` and doesn't re-wrap,
+  which is exactly how it avoids the "optional of an optional" (`T??`) problem
+  that plain `map` would create when chaining functions that themselves return
+  `Optional`.
+- **Implicitly unwrapped optionals (`T!`)** are, at the type-system level, still
+  literally `Optional<T>` — same enum, same memory layout, same spare-bit
+  optimization. The only difference is a compiler-inserted *implicit*
+  force-unwrap at every use site where a non-optional `T` is expected. This is
+  why `T!` can still be `nil`-checked with `if let` like any other optional, and
+  why it crashes exactly the same way `!` does if you're wrong.
+- **Nested optional chaining (`a?.b?.c`)** compiles into one merged branch rather
+  than three sequential unwraps — the compiler tracks a single "has this chain
+  gone nil yet" state through SIL and short-circuits at the first `.none`,
+  avoiding redundant tag checks.
+
 ## Exercise
 
 Write a function `firstValidEmail(_ candidates: [String?]) -> String?` that

@@ -181,6 +181,34 @@ this CLT-only environment) to launch and attach to a running process.
 | Need to find an unknown hot spot | Instruments' Time Profiler (needs full Xcode) |
 | Suspected memory leak/growth | Instruments' Allocations template (needs full Xcode) |
 
+## How It Actually Works
+
+- **Instruments' Time Profiler samples the call stack** at a fixed interval
+  (not tracing every function call) using the OS's low-overhead sampling
+  facility — this is statistical, so a function that's fast but called a
+  billion times may be under-sampled relative to a slow function called once;
+  that's why "% of samples" and "actual wall time" can tell different stories
+  and both are worth checking.
+- **Retain/release traffic is itself measurable and often the dominant cost**
+  in ARC-heavy hot loops — Instruments' "Allocations" and specialized ARC
+  templates can show you exactly which lines emit retain/release traffic; a
+  common fix (converting a class-heavy hot path to structs, or adding `final`
+  to enable devirtualization) reduces atomic increment/decrement operations,
+  which are genuinely expensive on multi-core hardware due to cache-line
+  contention (every retain/release is a full memory-barrier atomic op).
+- **Copy-on-write buffer sharing shows up as unexpected "extra" allocations** in
+  a profiler when you didn't expect a copy — this happens whenever a `var`
+  array/dictionary/string's backing buffer's reference count is >1 at the
+  moment of mutation (checked via `isKnownUniquelyReferenced`), forcing a real
+  heap copy of the whole buffer before the mutation proceeds — a classic
+  performance trap when passing a large collection into multiple functions
+  that each mutate their own "copy."
+- **`-Ounchecked`** removes overflow/bounds-checking traps the release
+  optimizer (`-O`) still keeps — this measurably speeds up numeric-heavy inner
+  loops but reintroduces genuine undefined behavior on overflow, which is why
+  it's reserved for narrow, carefully audited hot paths rather than used
+  project-wide.
+
 ## Exercise
 
 Write two versions of a function that deduplicates a `[Int]` while

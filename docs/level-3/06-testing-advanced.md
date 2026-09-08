@@ -173,6 +173,32 @@ func testSortPerformance() {
 | Wait for a completion handler | `XCTestExpectation` + `wait(for:timeout:)` |
 | Catch performance regressions | `measure { ... }` |
 
+## How It Actually Works
+
+- **Mocking via protocols works because of the witness-table indirection
+  described in the design-patterns chapter** — injecting a `MockNetworking:
+  NetworkingProtocol` in place of the real implementation swaps out which
+  witness table your code calls through at runtime, with zero changes to the
+  calling code, because the call site only ever knew about the protocol's
+  abstract requirements.
+- **Performance tests (`measure { }`)** run the block multiple times (10 by
+  default in XCTest) and use statistical baselines (mean + standard deviation)
+  rather than a single timing, specifically because wall-clock timing on a
+  shared CI machine or a laptop with background processes is noisy — a single
+  run's number is not trustworthy on its own.
+- **Test doubles and dependency injection interact with `async`/actors**
+  subtly: an actor-isolated dependency mocked out in a test still requires
+  `await` at every call site (isolation is a compile-time property of the
+  protocol's `async` requirement, not of the concrete type), so your mock's
+  methods typically need to be declared `async` too even if the mock itself
+  does no real asynchronous work — it just returns immediately after an
+  implicit suspension point.
+- **Code coverage instrumentation** works by having the compiler emit extra
+  counter-increment instructions at every basic block (branch) in your SIL,
+  compiled in a special coverage-instrumented build — this is why coverage
+  builds run measurably slower and why coverage numbers reflect *branches
+  taken*, not just "lines executed."
+
 ## Exercise
 
 Write a protocol `ClockProviding` with `func now() -> Date`, a

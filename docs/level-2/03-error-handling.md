@@ -202,6 +202,31 @@ A subtle trap in the other direction: `try?` silently swallows the specific
 error. If you find yourself immediately checking *which* error a `try?`
 produced, that's a sign you wanted `do`/`catch` instead.
 
+## How It Actually Works
+
+- Swift's `throws`/`try`/`catch` is **not exceptions** in the C++/Java sense —
+  there's no stack unwinding via a runtime exception mechanism. A `throws`
+  function's calling convention reserves a dedicated error-return register
+  (or a hidden extra "out" parameter on some platforms). Throwing sets that
+  register to the error value and returns immediately; every calling frame that
+  propagates the error (rather than catching it) just checks that register and
+  re-returns, in a plain, predictable, branch-based way. This is why Swift error
+  propagation is cheap compared to C++ exceptions — no unwind tables, no
+  stack-walking machinery at throw time.
+- `do { try ... } catch { ... }` compiles to: call the throwing function, check
+  the error register, and if non-nil jump to the `catch` block's code — pattern
+  matching in `catch` cases (`catch MyError.notFound`) reuses the same
+  enum-tag-based pattern matching as `switch`.
+- **`Result<Success, Failure>`** is genuinely just a two-case generic enum
+  (`.success`/`.failure`), with none of the special calling-convention treatment
+  `throws` gets — converting between `Result` and `throws` (`Result.get()`,
+  `Result(catching:)`) is ordinary generic code, which is why `Result` composes
+  well as a value you can store or pass around while `throws` cannot (a thrown
+  error can't be "held" — it must be caught or propagated immediately).
+- **`try?`** converts a thrown error into `Optional<T>.none`, discarding the
+  actual error value — mechanically this is a `do/catch` wrapped around the call
+  where every `catch` clause is synthesized to just produce `nil`.
+
 ## Exercise
 
 Define an enum `BankError: Error` with cases `insufficientFunds(shortfall:

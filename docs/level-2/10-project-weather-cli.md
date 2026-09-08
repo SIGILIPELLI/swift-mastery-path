@@ -497,6 +497,32 @@ Test Case 'ResolveCityTests.testResolveUnknownCityThrows' passed.
 Executed 9 tests, with 0 failures
 ```
 
+## How It Actually Works
+
+- **`URLSession`'s async APIs (`data(from:)`)** internally use a completion-handler-based
+  callback chain wrapped by `withCheckedThrowingContinuation` (or the runtime
+  equivalent) to bridge into Swift Concurrency — the actual network I/O still
+  runs on `URLSession`'s own background dispatch queues/threads; `await`
+  suspends your calling task without blocking a thread while the response
+  streams in, then resumes your task's continuation on a cooperative-thread-pool
+  worker once the response completes.
+- **JSON decoding of the API response** goes through the same
+  compiler-synthesized `Codable` machinery covered in the JSON chapter — the
+  cost here is dominated by parsing raw JSON bytes into the decoder's
+  intermediate tree representation, not by your `struct`'s field count.
+- **Error propagation across an `async throws` call chain** uses the same
+  error-register-based mechanism as synchronous `throws` (no exception
+  unwinding) — an error thrown deep inside a decoding call propagates back
+  through every intermediate `await`-ing frame as a plain, cheap check-and-return,
+  which is why chaining several throwing async calls together (fetch → decode →
+  transform) doesn't accumulate meaningful runtime overhead beyond the actual
+  I/O.
+- **Caching command-line output** (if your version writes to a file) round-trips
+  through `FileManager`'s POSIX-backed APIs, which are thin Swift wrappers over
+  the same system calls (`open`/`write`/`close`) a C program would use — no
+  additional buffering layer beyond what `Data`'s own contiguous-bytes storage
+  provides.
+
 ## Stretch goals
 
 - Add a `--units metric` flag that switches `temperature_unit` to Celsius

@@ -100,6 +100,30 @@ snippets as you type. On Linux or for lightweight editing anywhere, **VS
 Code** with the official "Swift" extension (powered by SourceKit-LSP) works
 well. Either is fine for this course — pick one and move on.
 
+## How It Actually Works
+
+When you run `swift file.swift` or hit Run in Xcode, several distinct tools chain
+together before a single instruction executes:
+
+- **The Swift compiler (`swiftc`)** parses your source into an AST, then lowers it
+  to **SIL** (Swift Intermediate Language) — a Swift-specific IR that's where the
+  compiler enforces exclusivity checking and performs whole-module optimizations
+  (generic specialization, inlining, ARC optimization passes) before handing off to
+  LLVM IR and finally to machine code via LLVM's backend.
+- **The Swift runtime** is a separate shared library (`libswiftCore`) linked into
+  every binary. It provides metadata for types (used for reflection, `String`
+  description, and dynamic casts like `as?`), the memory allocator hooks for
+  reference counting, and the existential container machinery for protocol types.
+- **Package/toolchain resolution**: `swift build`, Xcode, and SwiftPM all resolve
+  which toolchain (Swift version, SDK, target triple) to use before invoking the
+  same underlying `swiftc` — this is why `swift --version` and your Xcode's
+  "Swift Language Version" setting must agree, or you'll see ABI-mismatch style
+  errors.
+- On Apple platforms, the compiled binary also embeds a **Swift ABI stability**
+  marker; since Swift 5, the compiler emits code that talks to a fixed runtime ABI
+  baked into the OS, which is why apps don't have to bundle the whole Swift runtime
+  themselves on modern OS versions (it ships in the OS instead).
+
 ## Exercise
 
 Write a file `greeter.swift` that prints a greeting for three different

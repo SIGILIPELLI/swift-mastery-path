@@ -185,6 +185,36 @@ else) applies regardless of platform availability.
 | Compare secrets safely | `HMAC.isValidAuthenticationCode`, or a manual constant-time XOR loop |
 | Store a secret on-device | Keychain (never `UserDefaults`) |
 
+## How It Actually Works
+
+- **Keychain storage isn't "just an encrypted file you read/write"** — it's a
+  separate system daemon (`securityd`/`SecItem` on Apple platforms) that your
+  process talks to via IPC (XPC). Each item is stored encrypted with a key
+  derived from the device's hardware Secure Enclave (where available) and the
+  device passcode, and access-control flags (`kSecAttrAccessible*`) determine
+  *when* the OS is even willing to decrypt the item for you (e.g.
+  `whenUnlockedThisDeviceOnly` refuses access while the device is locked,
+  enforced by the OS, not by your app's code).
+- **ATS (App Transport Security) enforcement** happens at the `URLSession`
+  layer before a single byte goes over the network — the OS checks the target
+  host's TLS configuration against ATS's minimum requirements (TLS version,
+  forward secrecy cipher suites) and refuses the connection outright if it
+  doesn't qualify, which is why ATS exceptions are declared in `Info.plist`
+  rather than checked in your Swift code — the enforcement point is beneath
+  your code, in the platform's networking stack.
+- **Certificate pinning** works by intercepting `URLSessionDelegate`'s
+  `didReceiveChallenge` callback (fired mid-TLS-handshake, before the request
+  body is sent) and comparing the server's presented certificate/public key
+  against a bundled expected value — this happens *in addition to*, not
+  instead of, normal system trust-chain validation, so pinning failures are a
+  separate rejection path from "invalid certificate."
+- **String literals containing secrets are visible in the compiled binary** as
+  plain readable bytes in the `__TEXT` segment (Swift string literals aren't
+  obfuscated by default) — this is a mechanical fact worth internalizing: a
+  hardcoded API key isn't "hidden" by compilation, it's trivially extractable
+  with `strings` on the binary, which is precisely why secrets belong in
+  Keychain or a remote config service instead.
+
 ## Exercise
 
 Write a function `func sign(payload: String, secret: SymmetricKey) ->
