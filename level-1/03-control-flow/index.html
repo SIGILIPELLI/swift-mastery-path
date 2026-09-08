@@ -851,6 +851,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2508,6 +2530,31 @@ instead of only the innermost one.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>switch</code> exhaustiveness</strong> is enforced by the type checker, not by a runtime
+  fallthrough check: for enums, the compiler statically walks every case
+  declared in the type and refuses to compile unless every one is covered (or a
+  <code>default</code> is present). This is what lets you add a new enum case and get a
+  compiler error at every switch that needs updating — a huge refactoring safety
+  net that <code>if/else</code> chains don't give you.</li>
+<li><strong>Pattern matching</strong> (<code>case let x where ...</code>, tuple patterns, <code>.some(x)</code>) all
+  compile down to the same underlying mechanism: a sequence of conditional
+  branches in SIL that test a value's tag (for enums) or destructure a tuple's
+  fields directly from registers/stack slots — there's no dictionary lookup or
+  reflection involved, so a <code>switch</code> over an enum is typically as fast as a
+  hand-written <code>if</code> chain, sometimes faster because the compiler can build a
+  jump table when cases are dense integer-like tags.</li>
+<li><strong><code>for-in</code> loops</strong> over a <code>Sequence</code> desugar to explicit <code>makeIterator()</code> /
+  <code>next()</code> calls under the hood — <code>for x in array</code> becomes a <code>while</code> loop pulling
+  from an <code>IndexingIterator</code>. Because <code>Array</code>'s iterator just walks a raw buffer
+  pointer, this compiles to a tight pointer-increment loop after optimization,
+  not a general-purpose "call next() and unwrap the Optional" pattern (the
+  optimizer inlines and eliminates that machinery entirely at <code>-O</code>).</li>
+<li><strong><code>where</code> clauses</strong> on <code>for-in</code> and <code>switch</code> are evaluated per-iteration as a
+  plain boolean guard inserted into the generated branch — they don't change the
+  iteration strategy at all, they just add a skip test.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a program that loops from 1 to 30. For each number, print <code>"Fizz"</code> if
 divisible by 3, <code>"Buzz"</code> if divisible by 5, <code>"FizzBuzz"</code> if divisible by both,

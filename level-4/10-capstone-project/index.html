@@ -2173,6 +2173,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2296,6 +2307,17 @@
     <span class="md-ellipsis">
       
         Design notes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
       
     </span>
   </a>
@@ -2526,6 +2548,37 @@ following <code>GET</code> shows it persisted.</p>
   Vapor isn't used here, and its stretch goals for what a production
   version would add (real <code>Codable</code> JSON, connection keep-alive, more
   routes).</li>
+</ul>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p>Pulling the whole stack together for a capstone project means several of the
+mechanisms from earlier chapters are now operating simultaneously, and worth
+being explicit about how they interact:</p>
+<ul>
+<li><strong>Concurrency + ARC</strong>: every <code>Task</code>/actor hop that crosses a class boundary
+  triggers real retain/release traffic on captured references — in a
+  capstone-scale app with many concurrent tasks touching shared model objects,
+  this atomic increment/decrement cost (not raw CPU work) is often the first
+  thing a profiler surfaces, which is why structuring shared state behind
+  actors (serializing access, and often letting the compiler prove fewer
+  retains are needed) tends to outperform naive "wrap everything in a class and
+  pass it around" designs.</li>
+<li><strong>SwiftUI's view-identity diffing interacting with async data loading</strong>: a
+  view that kicks off an <code>async</code> fetch in <code>.task { }</code> and updates <code>@State</code> on
+  completion relies on the view <em>surviving</em> (same identity) across the
+  suspension — if the view is torn down and recreated (e.g. due to a parent's
+  <code>ForEach</code> id churn) while the fetch is in flight, the <code>.task</code> modifier
+  automatically cancels the in-flight task tied to the old identity, which is
+  a deliberate structured-concurrency safety feature, not a bug, but a common
+  source of "why did my fetch just silently stop" confusion if you don't know
+  to look for it.</li>
+<li><strong>End-to-end error handling</strong> across network → decode → persistence →
+  UI layers strings together the same cheap error-register propagation from
+  the error-handling chapter at every <code>throws</code>/<code>async throws</code> boundary, with
+  each layer's <code>catch</code> translating a lower-level error type into one
+  meaningful at its own layer — a well-architected capstone typically has 2-3
+  distinct error domains (network, decoding, persistence) explicitly mapped
+  into a single app-facing error type at the boundary where the UI consumes
+  them, rather than leaking raw <code>URLError</code>/<code>DecodingError</code> all the way up.</li>
 </ul>
 <h2 id="stretch-goals">Stretch goals<a class="headerlink" href="#stretch-goals" title="Permanent link">&para;</a></h2>
 <ul>

@@ -1283,6 +1283,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2535,6 +2557,42 @@ myArray</code> and <code>for x in mySet</code> both work with fully type-safe <c
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><strong>Generics in Swift are resolved through witness tables, not type
+erasure.</strong> When you call <code>swapValues(&amp;x, &amp;y)</code> with <code>Int</code>, the compiler
+knows the concrete type at the call site and, in most cases, <em>specializes</em>
+the generic function — generating a dedicated machine-code copy of
+<code>swapValues</code> for <code>Int</code> at compile time (visible with whole-module
+optimization), identical in performance to hand-writing <code>swapInts</code>. This is
+why generics carry "zero runtime overhead for the abstraction": the
+abstraction is erased by the optimizer, not preserved and dispatched at
+runtime, in contrast to type-erased <code>Any</code>-based approaches.</p>
+<p><strong>Protocol constraints compile to a witness table, not a vtable.</strong> <code>&lt;T:
+Comparable&gt;</code> doesn't give the function a class-style vtable pointer;
+instead, when full specialization isn't possible (a function in a
+separately-compiled module, called with a type not known until runtime),
+the compiler passes a hidden <em>value witness table</em> and <em>protocol witness
+table</em> alongside <code>T</code> — essentially a struct of function pointers for <code>T</code>'s
+size/alignment/copy behavior and its <code>Comparable</code> conformance (<code>&lt;</code>, <code>==</code>,
+etc.). The generic function calls through those pointers instead of
+static dispatch. This indirection is what lets one compiled <code>largest&lt;T:
+Comparable&gt;</code> binary work across every <code>Comparable</code> type ever defined,
+including ones written after the generic function was compiled.</p>
+<p><strong><code>associatedtype</code> is resolved the same way, one level up.</strong> A protocol
+with an <code>associatedtype</code> can't be used as a standalone type (<code>Container</code>
+alone isn't a valid type annotation) because the compiler needs to know
+<code>Item</code>'s witness table to lay out calls through it — this is precisely why
+you write <code>some Container</code> or a generic <code>&lt;C: Container&gt;</code> constraint
+instead: both give the compiler a concrete <code>Item</code> to resolve at the call
+site, whereas a bare existential wouldn't carry the associated-type
+information needed to generate a witness table for it (Swift's <code>any
+Container</code> existential support for this is deliberately restricted for
+exactly this reason).</p>
+<p><strong>Why <code>Stack&lt;Int&gt;</code> and <code>Stack&lt;String&gt;</code> are called "specializations"</strong>:
+each instantiation gets its own independently laid-out storage (an <code>[Int]</code>
+buffer vs. a <code>[String]</code> buffer, per the copy-on-write array mechanism), so
+there is no shared "generic Stack" object at runtime — only concrete,
+type-specific instances that happen to share one source definition.</p>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a generic function <code>func average&lt;T: BinaryInteger&gt;(_ values: [T]) -&gt;
 Double</code> that returns the arithmetic mean as a <code>Double</code> (hint: convert each

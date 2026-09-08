@@ -2130,6 +2130,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2320,6 +2331,17 @@
     <span class="md-ellipsis">
       
         Cheat sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
       
     </span>
   </a>
@@ -2519,6 +2541,37 @@ compile-time member access, which is why it requires <code>@objc</code>/<code>NS
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Swift/C interop works because Swift's calling convention is largely
+  compatible with C's at the ABI level for simple types</strong> — a C function
+  imported via a bridging header or module map is called almost directly, with
+  the compiler generating thin marshaling code only where representations
+  differ (e.g. Swift's <code>String</code> must be converted to/from a C <code>char*</code> via
+  explicit UTF-8 encoding/decoding, since Swift's <code>String</code> is not
+  null-terminated bytes internally).</li>
+<li><strong>Objective-C interop relies on the shared Objective-C runtime.</strong> A Swift
+  class marked <code>@objc</code>/inheriting from <code>NSObject</code> gets an Objective-C-compatible
+  class structure (isa pointer, method list) generated alongside its normal
+  Swift vtable — this dual representation is what lets Objective-C code call
+  Swift methods via <code>objc_msgSend</code> (Objective-C's dynamic, selector-based
+  dispatch, distinct from Swift's own vtable/witness-table dispatch) while
+  Swift code calling the same method uses the faster, direct Swift-native path.</li>
+<li><strong>Bridging value types (<code>NSString</code>↔<code>String</code>, <code>NSArray</code>↔<code>Array</code>)</strong> is not
+  always a real copy — Swift's <code>String</code> and <code>Array</code> implement "bridging"
+  interfaces so that, in many cases, an <code>NSString</code>/<code>NSArray</code> can be wrapped
+  rather than deep-copied, deferring an actual copy until (or unless) it's
+  genuinely needed, following the same copy-on-write philosophy used elsewhere
+  in Swift's standard library.</li>
+<li><strong>Manual memory management at the boundary</strong> (<code>Unmanaged&lt;T&gt;</code>,
+  <code>withUnsafePointer</code>, <code>UnsafeMutablePointer</code>) exists specifically because ARC's
+  automatic retain/release insertion only understands Swift-managed references
+  — when a C API expects to own a pointer itself (e.g. a callback context
+  pointer), you must explicitly opt an object out of ARC's automatic counting
+  (<code>Unmanaged.passRetained</code>/<code>.takeRetainedValue</code>) and take responsibility for
+  balancing the retain count yourself, exactly at the seam where ARC's
+  compile-time analysis can no longer see how the reference is used.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a small C-interop demo that uses <code>UnsafeMutablePointer&lt;Int32&gt;</code> (via
 <code>UnsafeMutablePointer&lt;Int32&gt;.allocate(capacity:)</code>) to manually allocate a

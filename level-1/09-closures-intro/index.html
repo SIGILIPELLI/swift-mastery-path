@@ -1008,6 +1008,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2439,6 +2461,33 @@ to it.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A closure that captures variables from its enclosing scope is compiled into
+  two things: a <strong>function pointer</strong> to the compiled closure body, and a
+  <strong>context object</strong> on the heap holding the captured variables — together this
+  is a "thick" closure, twice the size of a plain function pointer (one word for
+  the code pointer, one for the context pointer).</li>
+<li><strong>Capture semantics matter mechanically, not just semantically.</strong> When you
+  write <code>{ [weak self] in ... }</code> or capture a <code>var</code> by reference (the default for
+  closures that mutate an outer variable), the compiler actually allocates a
+  small heap <strong>box</strong> to hold that variable, and both the outer scope and the
+  closure hold a reference to the <em>same box</em> — this is why two closures that
+  both capture the same local <code>var</code> see each other's writes, and why capturing a
+  loop variable historically needed care (modern Swift creates a fresh capture
+  per iteration by default, avoiding the classic "closures over loop variables"
+  bug from other languages).</li>
+<li><strong><code>@escaping</code></strong> exists because the compiler needs to know, at the call site,
+  whether a closure's context (and anything it captures, including <code>self</code>) must
+  survive past the function call that received it. A non-escaping closure's
+  context can safely live on the stack and be deallocated when the function
+  returns; marking a parameter <code>@escaping</code> forces the compiler to heap-allocate
+  the context and retain any captured class references for as long as the
+  closure itself is retained (e.g. stored in a property, or scheduled on
+  <code>DispatchQueue</code>).</li>
+<li>Trailing closure syntax (<code>array.map { ... }</code>) is pure syntax sugar resolved at
+  parse time — it has zero runtime distinction from <code>array.map({ ... })</code>.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a function <code>makeMultiplier(factor: Int) -&gt; (Int) -&gt; Int</code> that returns a
 closure multiplying its input by <code>factor</code> (using the closure-capture pattern

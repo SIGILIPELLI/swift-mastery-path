@@ -2091,6 +2091,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2298,6 +2309,17 @@
     <span class="md-ellipsis">
       
         Cheat sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
       
     </span>
   </a>
@@ -2525,6 +2547,37 @@ cleanly.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Horizontal scaling interacts with Swift's cooperative-thread-pool
+  concurrency model per-instance, not cluster-wide</strong> — each process instance
+  gets its own fixed-size cooperative pool sized to its container's visible
+  CPU count; over-provisioning CPU limits below what the pool detects (a common
+  container/cgroup misconfiguration) starves the pool and causes tasks to queue
+  even though "the pool" appears fine, which is a frequent, hard-to-spot source
+  of latency in containerized Swift services.</li>
+<li><strong>Connection pool sizing must be tuned relative to the cooperative pool, not
+  just to the database's max-connections limit</strong> — because request-handling
+  tasks suspend (not block a thread) while waiting on a pooled database
+  connection, you can safely serve far more concurrent in-flight requests than
+  you have OS threads, but only up to however many database connections the
+  pool actually holds; beyond that, additional requests queue for a database
+  connection to free up.</li>
+<li><strong>Caching layers (in-memory <code>NSCache</code>/custom LRU vs. a shared cache like
+  Redis)</strong> differ mechanically in cross-instance consistency: an in-process
+  cache is only visible to that one process's cooperative pool and is
+  invalidated by nothing but its own eviction policy or process restart, while
+  a shared external cache adds a network round trip per lookup but stays
+  consistent across every horizontally-scaled instance — the right choice
+  depends on whether staleness <em>within a single instance</em> is acceptable for
+  your data.</li>
+<li><strong>Backpressure</strong>: a <code>TaskGroup</code> or <code>AsyncStream</code> handling an unbounded influx
+  of work will happily keep queuing child tasks/buffered values if you don't
+  explicitly bound concurrency (e.g. capping how many tasks are added to a
+  group at once) — since tasks are cheap to create but not free, an unbounded
+  fan-out under real production load is a common way to exhaust memory or
+  database connections well before CPU becomes the bottleneck.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Take the <code>processOneByOne</code>/<code>processBatched</code> comparison above and change
 <code>expensiveStep</code> to simulate a real per-call cost — for example, <code>try?

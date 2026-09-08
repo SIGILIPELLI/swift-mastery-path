@@ -1384,6 +1384,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2497,6 +2519,32 @@ using wrappers:</p>
 required extra parameters with no defaults), the memberwise initializer can
 disappear entirely, forcing you to write <code>init</code> by hand — always check by
 trying to construct the type after adding a wrapper.</p>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li>A property wrapper is pure <strong>compiler desugaring</strong> — <code>@Wrapper var x: Int = 5</code>
+  is rewritten by the compiler into a hidden stored property <code>_x: Wrapper&lt;Int&gt;</code>
+  initialized as <code>Wrapper(wrappedValue: 5)</code>, plus a computed property <code>x</code> whose
+  getter/setter simply forward to <code>_x.wrappedValue</code>. Nothing about this is
+  runtime magic — you could write the exact same expansion by hand, and you can
+  even see it by inspecting the compiler's generated interface.</li>
+<li><strong><code>projectedValue</code> and the <code>$</code> prefix</strong> work the same way: <code>$x</code> desugars to
+  <code>_x.projectedValue</code>, a second computed property the compiler synthesizes only
+  if your wrapper type declares a <code>projectedValue</code>. This is purely a naming
+  convention the compiler recognizes (the leading <code>$</code>), not a separate language
+  feature.</li>
+<li><strong>Memberwise initializer interaction</strong>: because a wrapped property is
+  secretly backed by a <em>different</em> stored property type (<code>Wrapper&lt;Int&gt;</code>, not
+  <code>Int</code>), the compiler's synthesized memberwise initializer for a struct with
+  wrapped properties takes the <em>wrapped</em> type as its parameter by default
+  (calling the wrapper's <code>init(wrappedValue:)</code>) — unless the wrapper doesn't
+  provide that initializer, in which case no memberwise init is synthesized at
+  all, which is the "trap" this chapter's example demonstrates.</li>
+<li><strong>SwiftUI's <code>@State</code>/<code>@Binding</code>/<code>@ObservedObject</code></strong> are just property wrappers
+  built on this exact same compile-time mechanism, layered with runtime storage
+  that ties into SwiftUI's own diffing/invalidation system (see the SwiftUI
+  chapter) — there's no separate "SwiftUI property" language feature, only this
+  general-purpose wrapper mechanism used to build framework-specific behavior.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a property wrapper <code>@propertyWrapper struct Uppercased</code> that stores a
 <code>String</code> and always uppercases it on set (so reading <code>wrappedValue</code> never

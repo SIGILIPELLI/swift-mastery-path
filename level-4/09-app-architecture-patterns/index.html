@@ -2147,6 +2147,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2298,6 +2309,17 @@
     <span class="md-ellipsis">
       
         Cheat sheet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
       
     </span>
   </a>
@@ -2517,6 +2539,39 @@ scattered across views — is identical either way.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>MVVM's "reactive" update mechanism in SwiftUI is really just Combine's (or
+  Observation's) publisher/observer machinery feeding SwiftUI's own
+  identity-based diffing</strong> (see the SwiftUI chapter) — a view model's
+  <code>@Published</code> property change synchronously notifies its <code>objectWillChange</code>
+  publisher, SwiftUI's <code>@ObservedObject</code>/<code>@StateObject</code> property wrapper
+  subscribes to exactly that publisher, and the notification simply marks the
+  dependent view's identity dirty for the next render pass; there's no
+  polling, and no direct method call from model to view.</li>
+<li><strong><code>@StateObject</code> vs <code>@ObservedObject</code> is a <em>lifetime</em> distinction enforced by
+  where the underlying storage lives</strong> — <code>@StateObject</code> allocates and owns its
+  wrapped object in the same identity-keyed external storage <code>@State</code> uses (so
+  it survives the owning view's <code>body</code> re-evaluations and isn't recreated),
+  while <code>@ObservedObject</code> assumes the object is owned and passed in from
+  elsewhere; using <code>@ObservedObject</code> where <code>@StateObject</code> was needed causes the
+  object to be silently reallocated (losing its state) every time the parent
+  view re-renders, because there's no persistent storage backing it.</li>
+<li><strong>The Observation framework (<code>@Observable</code>, modern Swift)</strong> replaces Combine's
+  broad "notify on any published change" with <strong>per-property dependency
+  tracking</strong>: SwiftUI's rendering system records exactly which properties a
+  given view's <code>body</code> actually read during its last evaluation, and only
+  invalidates that view when one of <em>those specific</em> properties changes — a
+  meaningfully more precise (and often faster) invalidation model than
+  <code>ObservableObject</code>'s "any <code>@Published</code> property changed → everyone
+  observing this object re-renders" behavior.</li>
+<li><strong>Dependency injection containers</strong> in Swift architectures are, mechanically,
+  almost always just protocol-typed properties resolved through witness-table
+  dispatch (see the protocol-oriented programming chapter) — "the container"
+  itself is typically nothing more than a dictionary or a set of factory
+  closures mapping a protocol type to a concrete instance/factory, with no
+  special runtime support beyond ordinary Swift generics and protocols.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Add a <code>SettingsViewModel</code> with a <code>@Published var isDarkModeEnabled: Bool</code>
 and a <code>toggleDarkMode()</code> method, following the same <code>@MainActor</code> +

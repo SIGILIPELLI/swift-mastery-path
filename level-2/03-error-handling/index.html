@@ -1238,6 +1238,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2541,6 +2563,31 @@ immediately with <code>do</code>/<code>catch</code>:</p>
 <p>A subtle trap in the other direction: <code>try?</code> silently swallows the specific
 error. If you find yourself immediately checking <em>which</em> error a <code>try?</code>
 produced, that's a sign you wanted <code>do</code>/<code>catch</code> instead.</p>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Swift's <code>throws</code>/<code>try</code>/<code>catch</code> is <strong>not exceptions</strong> in the C++/Java sense —
+  there's no stack unwinding via a runtime exception mechanism. A <code>throws</code>
+  function's calling convention reserves a dedicated error-return register
+  (or a hidden extra "out" parameter on some platforms). Throwing sets that
+  register to the error value and returns immediately; every calling frame that
+  propagates the error (rather than catching it) just checks that register and
+  re-returns, in a plain, predictable, branch-based way. This is why Swift error
+  propagation is cheap compared to C++ exceptions — no unwind tables, no
+  stack-walking machinery at throw time.</li>
+<li><code>do { try ... } catch { ... }</code> compiles to: call the throwing function, check
+  the error register, and if non-nil jump to the <code>catch</code> block's code — pattern
+  matching in <code>catch</code> cases (<code>catch MyError.notFound</code>) reuses the same
+  enum-tag-based pattern matching as <code>switch</code>.</li>
+<li><strong><code>Result&lt;Success, Failure&gt;</code></strong> is genuinely just a two-case generic enum
+  (<code>.success</code>/<code>.failure</code>), with none of the special calling-convention treatment
+  <code>throws</code> gets — converting between <code>Result</code> and <code>throws</code> (<code>Result.get()</code>,
+  <code>Result(catching:)</code>) is ordinary generic code, which is why <code>Result</code> composes
+  well as a value you can store or pass around while <code>throws</code> cannot (a thrown
+  error can't be "held" — it must be caught or propagated immediately).</li>
+<li><strong><code>try?</code></strong> converts a thrown error into <code>Optional&lt;T&gt;.none</code>, discarding the
+  actual error value — mechanically this is a <code>do/catch</code> wrapped around the call
+  where every <code>catch</code> clause is synthesized to just produce <code>nil</code>.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Define an enum <code>BankError: Error</code> with cases <code>insufficientFunds(shortfall:
 Double)</code> and <code>invalidAmount</code>. Write a throwing function <code>withdraw(amount:

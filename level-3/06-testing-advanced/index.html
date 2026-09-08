@@ -1687,6 +1687,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2507,6 +2529,32 @@ catching accidental performance regressions:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Mocking via protocols works because of the witness-table indirection
+  described in the design-patterns chapter</strong> — injecting a <code>MockNetworking:
+  NetworkingProtocol</code> in place of the real implementation swaps out which
+  witness table your code calls through at runtime, with zero changes to the
+  calling code, because the call site only ever knew about the protocol's
+  abstract requirements.</li>
+<li><strong>Performance tests (<code>measure { }</code>)</strong> run the block multiple times (10 by
+  default in XCTest) and use statistical baselines (mean + standard deviation)
+  rather than a single timing, specifically because wall-clock timing on a
+  shared CI machine or a laptop with background processes is noisy — a single
+  run's number is not trustworthy on its own.</li>
+<li><strong>Test doubles and dependency injection interact with <code>async</code>/actors</strong>
+  subtly: an actor-isolated dependency mocked out in a test still requires
+  <code>await</code> at every call site (isolation is a compile-time property of the
+  protocol's <code>async</code> requirement, not of the concrete type), so your mock's
+  methods typically need to be declared <code>async</code> too even if the mock itself
+  does no real asynchronous work — it just returns immediately after an
+  implicit suspension point.</li>
+<li><strong>Code coverage instrumentation</strong> works by having the compiler emit extra
+  counter-increment instructions at every basic block (branch) in your SIL,
+  compiled in a special coverage-instrumented build — this is why coverage
+  builds run measurably slower and why coverage numbers reflect <em>branches
+  taken</em>, not just "lines executed."</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a protocol <code>ClockProviding</code> with <code>func now() -&gt; Date</code>, a
 <code>LiveClock</code> conforming implementation using <code>Date()</code>, and a <code>FixedClock</code>

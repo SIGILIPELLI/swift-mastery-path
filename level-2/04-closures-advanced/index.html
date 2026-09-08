@@ -1255,6 +1255,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2543,6 +2565,35 @@ where you can prove the lifetimes are locked together.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>@escaping</code> closures stored in properties retain their captured context</strong> —
+  if that context includes <code>self</code> (a class instance), the closure holds a
+  strong reference, and the object holds a strong reference to the closure
+  (through the property) — a genuine <strong>retain cycle</strong>, which is why <code>[weak self]</code>
+  matters mechanically, not just stylistically: it tells the compiler to
+  generate a capture that stores <code>self</code> as an <code>Unmanaged</code>/weak reference (via a
+  side table entry, see the ARC chapter) rather than a strong one, so the object
+  graph doesn't keep itself alive forever.</li>
+<li><strong>Autoclosures (<code>@autoclosure</code>)</strong> don't change what a closure <em>is</em> — they
+  change what the <em>call site</em> looks like. <code>func assert(_ condition: @autoclosure () -&gt; Bool)</code>
+  causes the compiler to implicitly wrap whatever expression you pass in a
+  zero-argument closure at the call site, which is why <code>assert(x &gt; 0)</code> reads
+  like a plain boolean expression but is actually lazily evaluated — the
+  expression <code>x &gt; 0</code> is never computed unless <code>assert</code>'s body actually calls the
+  closure.</li>
+<li><strong>Closures as function parameters get specialized per call site</strong> when
+  possible: if the compiler can see the concrete closure passed at a call site
+  (no dynamic dispatch involved), it can inline the closure body directly into
+  the caller, eliminating the function-pointer indirection entirely — this is
+  why higher-order functions like <code>map</code>/<code>filter</code>/<code>reduce</code> used with closure
+  literals are typically just as fast as a hand-written loop after
+  optimization, despite looking more "functional."</li>
+<li><strong>Capture lists (<code>[x = someExpr]</code>)</strong> evaluate the right-hand expression
+  <em>immediately</em>, at closure-creation time, and store the result in the closure's
+  context — distinct from referencing <code>x</code> directly, which captures a reference
+  to the <em>variable</em> (and sees later mutations).</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Build a small <code>class Timer</code> with a stored <code>onFire: (() -&gt; Void)?</code> and a
 method <code>simulateFire()</code> that just calls <code>onFire?()</code>. Create a second class,

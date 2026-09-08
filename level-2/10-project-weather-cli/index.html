@@ -1478,6 +1478,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2415,6 +2426,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2879,6 +2901,32 @@ unknown city produces a clean error instead of a crash:</p>
 <a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>Test Case &#39;ResolveCityTests.testResolveUnknownCityThrows&#39; passed.
 <a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>Executed 9 tests, with 0 failures
 </code></pre></div>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>URLSession</code>'s async APIs (<code>data(from:)</code>)</strong> internally use a completion-handler-based
+  callback chain wrapped by <code>withCheckedThrowingContinuation</code> (or the runtime
+  equivalent) to bridge into Swift Concurrency — the actual network I/O still
+  runs on <code>URLSession</code>'s own background dispatch queues/threads; <code>await</code>
+  suspends your calling task without blocking a thread while the response
+  streams in, then resumes your task's continuation on a cooperative-thread-pool
+  worker once the response completes.</li>
+<li><strong>JSON decoding of the API response</strong> goes through the same
+  compiler-synthesized <code>Codable</code> machinery covered in the JSON chapter — the
+  cost here is dominated by parsing raw JSON bytes into the decoder's
+  intermediate tree representation, not by your <code>struct</code>'s field count.</li>
+<li><strong>Error propagation across an <code>async throws</code> call chain</strong> uses the same
+  error-register-based mechanism as synchronous <code>throws</code> (no exception
+  unwinding) — an error thrown deep inside a decoding call propagates back
+  through every intermediate <code>await</code>-ing frame as a plain, cheap check-and-return,
+  which is why chaining several throwing async calls together (fetch → decode →
+  transform) doesn't accumulate meaningful runtime overhead beyond the actual
+  I/O.</li>
+<li><strong>Caching command-line output</strong> (if your version writes to a file) round-trips
+  through <code>FileManager</code>'s POSIX-backed APIs, which are thin Swift wrappers over
+  the same system calls (<code>open</code>/<code>write</code>/<code>close</code>) a C program would use — no
+  additional buffering layer beyond what <code>Data</code>'s own contiguous-bytes storage
+  provides.</li>
+</ul>
 <h2 id="stretch-goals">Stretch goals<a class="headerlink" href="#stretch-goals" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Add a <code>--units metric</code> flag that switches <code>temperature_unit</code> to Celsius

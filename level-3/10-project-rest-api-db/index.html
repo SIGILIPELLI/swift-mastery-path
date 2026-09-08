@@ -1799,6 +1799,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2581,6 +2603,32 @@ the following <code>GET</code> reflects.</p>
   close</code> and cancels the connection after sending — simple and correct for
   a demo, but a production server keeps connections open (HTTP/1.1
   keep-alive) for efficiency.</li>
+</ul>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The request lifecycle runs on an event loop, not a thread-per-request
+  model</strong> (see the Vapor/SwiftNIO chapter) — your route handler's <code>async</code>
+  database call suspends the current task rather than blocking the event loop's
+  thread, letting that same OS thread continue servicing other in-flight
+  requests while waiting on the database round trip.</li>
+<li><strong>Database driver connection pooling</strong> hands each request a connection
+  checked out from a fixed pool (rather than opening a new TCP connection per
+  request), and returns it to the pool when the request's <code>async</code> work
+  completes or throws — pool exhaustion under load manifests as requests
+  suspending longer (waiting for a free connection), not as new connections
+  being opened, which is a common source of confusing latency spikes under
+  load testing.</li>
+<li><strong><code>Codable</code> models mapping directly to database rows</strong> rely on the same
+  compiler-synthesized encode/decode machinery as JSON (see the Codable
+  chapter) — a typical ORM-style layer decodes a raw row (column name/value
+  pairs) into your model the same way <code>JSONDecoder</code> decodes a JSON object,
+  just swapping the underlying <code>KeyedDecodingContainer</code> implementation for one
+  backed by SQL row data instead of parsed JSON.</li>
+<li><strong>Error propagation from database driver → business logic → HTTP response</strong>
+  uses the same cheap error-register mechanism as any other Swift <code>throws</code>
+  call chain — no exception unwinding cost accumulates as an error bubbles
+  from a low-level database error type up through several <code>async throws</code>
+  layers to becoming an HTTP error response.</li>
 </ul>
 <h2 id="stretch-goals">Stretch goals<a class="headerlink" href="#stretch-goals" title="Permanent link">&para;</a></h2>
 <ul>

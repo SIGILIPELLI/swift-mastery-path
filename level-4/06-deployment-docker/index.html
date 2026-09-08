@@ -2063,6 +2063,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2482,6 +2504,33 @@ pulled out of a load balancer's rotation without a human noticing first.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Swift's Linux Docker images ship a full separate toolchain and runtime</strong>
+  from Apple platforms — <code>libswiftCore</code> and friends are built against glibc
+  (not Apple's OS-provided Swift runtime), which is why a Swift binary built on
+  macOS cannot simply run in a Linux container: the ABI, the C standard library
+  it links against, and even some standard library behaviors (Foundation's
+  Linux implementation is a from-scratch reimplementation of parts of Apple's
+  Foundation) all differ.</li>
+<li><strong>Multi-stage Docker builds matter for size specifically because of static
+  vs. dynamic linking of the Swift runtime.</strong> A "builder" stage with the full
+  Swift toolchain (compiler, SDKs) is typically several GB; the final runtime
+  stage only needs the compiled binary plus (if dynamically linked) the
+  runtime's shared libraries — copying just those out via a multi-stage build
+  is what gets a production image down from gigabytes to tens of megabytes.
+  Static linking (<code>--static-swift-stdlib</code>) instead bakes the runtime into the
+  binary itself, trading a larger single binary for zero shared-library
+  dependency at deploy time (useful for minimal/distroless final images).</li>
+<li><strong>Container health checks and orchestrator-driven restarts</strong> interact with
+  Swift's process model directly: an uncaught <code>fatalError</code>/force-unwrap crash
+  terminates the whole process (there's no per-request isolation the way a
+  worker-process web server might have), which is exactly why a crash in one
+  request handler under something like Vapor takes down the entire container's
+  traffic until the orchestrator restarts it — a strong argument for
+  aggressively validating input at the edges rather than relying on
+  force-unwraps deep in request-handling code.</li>
+</ul>
 <h2 id="stretch-goals">Stretch goals<a class="headerlink" href="#stretch-goals" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Extend the Dockerfile above to build the REST API + Database project from

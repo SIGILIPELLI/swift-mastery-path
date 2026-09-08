@@ -1631,6 +1631,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2490,6 +2512,38 @@ Swift, a protocol (or often just a closure) is the interface:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Protocol-based patterns (Strategy, Observer) dispatch through the protocol
+  witness table</strong>, not a vtable. Every concrete type conforming to a protocol
+  gets a compiler-generated witness table — an array of function pointers, one
+  per protocol requirement, pointing at that specific type's implementation.
+  Calling a method on a value typed as the protocol looks up the right
+  implementation through this table rather than through inheritance, which is
+  why completely unrelated types (a struct and a class, say) can both
+  implement the same "Strategy" protocol with zero shared ancestry — the
+  witness table is generated independently per conforming type.</li>
+<li><strong>Singletons (<code>static let shared = ...</code>)</strong> rely on Swift's compiler-enforced
+  guarantee that a <code>static let</code>'s initializer runs <strong>exactly once, thread-safely</strong>,
+  via a hidden <code>dispatch_once</code>-style atomic flag the compiler inserts
+  automatically — you get thread-safe lazy initialization without writing any
+  locking code yourself, which is different from other languages where a
+  singleton's thread safety is something you must hand-implement.</li>
+<li><strong>Delegate pattern with <code>weak var delegate: SomeDelegate?</code></strong> needs its
+  protocol declared <code>AnyObject</code>-constrained specifically so the compiler can
+  store it as a <code>weak</code> reference — <code>weak</code> requires reference-counted storage
+  (a class or class-constrained existential), because weak references work by
+  registering into the referenced object's ARC side table (see the memory
+  management chapter), which only exists for class instances.</li>
+<li><strong>Existential containers</strong>: a variable typed as a protocol (not <code>some
+  Protocol</code>, but a bare <code>any Protocol</code> / plain protocol type) is stored as an
+  "existential container" — a fixed-size inline buffer (3 words) that either
+  holds a small conforming value directly or, if the value is too large,
+  a pointer to a heap-boxed copy, plus a pointer to that value's witness table.
+  This indirection is what protocol-typed variables/arrays cost over a
+  generic-constrained (<code>some Protocol</code>) alternative, which the compiler can
+  instead specialize and avoid the container entirely.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Implement the Decorator pattern: define a <code>protocol Coffee { func cost() -&gt;
 Double; func description() -&gt; String }</code>, a base <code>struct Espresso: Coffee</code>

@@ -1199,6 +1199,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2526,6 +2548,33 @@ silently skipped — exactly the safe-by-default behavior <code>as?</code> is fo
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>guard let</code></strong> doesn't just unwrap — it's a control-flow construct the
+  compiler treats specially for <strong>definite initialization and scope</strong>: the
+  unwrapped binding is available for the <em>rest of the enclosing scope</em> (unlike
+  <code>if let</code>, whose binding is scoped to the <code>if</code> body only) precisely because the
+  compiler can statically prove every path that doesn't <code>return</code>/<code>break</code>/<code>throw</code>
+  in the <code>else</code> branch guarantees the value was non-nil going forward.</li>
+<li><strong>Optional map/flatMap</strong> are ordinary generic functions on <code>Optional</code>, not
+  special syntax — <code>optionalValue.map { $0 * 2 }</code> compiles to a check-and-call:
+  branch on the enum tag, and only invoke the closure in the <code>.some</code> case,
+  wrapping its result back into <code>.some</code>. <code>flatMap</code> is identical except it
+  expects the closure to already return an <code>Optional</code> and doesn't re-wrap,
+  which is exactly how it avoids the "optional of an optional" (<code>T??</code>) problem
+  that plain <code>map</code> would create when chaining functions that themselves return
+  <code>Optional</code>.</li>
+<li><strong>Implicitly unwrapped optionals (<code>T!</code>)</strong> are, at the type-system level, still
+  literally <code>Optional&lt;T&gt;</code> — same enum, same memory layout, same spare-bit
+  optimization. The only difference is a compiler-inserted <em>implicit</em>
+  force-unwrap at every use site where a non-optional <code>T</code> is expected. This is
+  why <code>T!</code> can still be <code>nil</code>-checked with <code>if let</code> like any other optional, and
+  why it crashes exactly the same way <code>!</code> does if you're wrong.</li>
+<li><strong>Nested optional chaining (<code>a?.b?.c</code>)</strong> compiles into one merged branch rather
+  than three sequential unwraps — the compiler tracks a single "has this chain
+  gone nil yet" state through SIL and short-circuits at the first <code>.none</code>,
+  avoiding redundant tag checks.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a function <code>firstValidEmail(_ candidates: [String?]) -&gt; String?</code> that
 takes an array of optional strings and returns the first one that both

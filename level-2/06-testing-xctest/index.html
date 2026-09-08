@@ -1311,6 +1311,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2510,6 +2532,34 @@ prevents this.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>XCTest discovers tests via runtime reflection</strong>, not static analysis: on
+  Apple platforms it uses the Objective-C runtime's method-listing APIs to find
+  every method on an <code>XCTestCase</code> subclass whose name starts with <code>test</code> and
+  takes no arguments — this is why test method naming conventions matter
+  mechanically, not just by convention, and why Swift-only test targets on
+  Linux (via swift-corelibs-xctest) instead require you to explicitly list
+  tests in a <code>static var allTests</code> array, because there's no Objective-C runtime
+  to reflect over there.</li>
+<li><strong><code>XCTAssert*</code> failures don't throw or crash</strong> — under the hood they call
+  <code>XCTestCase.recordFailure(...)</code>, an ordinary method that appends to the test
+  run's failure list and marks the current test as failed, then execution
+  <em>continues</em> to the next line in the same test method (unless you use the
+  <code>XCTUnwrap</code>-style helpers, which do throw to stop the method early on failure).
+  That's why one assertion failing doesn't automatically stop subsequent
+  assertions in the same test from also running and being reported.</li>
+<li><strong>Test isolation</strong>: each <code>XCTestCase</code> instance is freshly allocated per test
+  method (<code>setUp()</code>/<code>tearDown()</code> run around each one individually, not once per
+  class), specifically so that state mutated by one test can't leak into
+  another through shared instance properties — the framework re-instantiates
+  your whole test class for every single <code>test...</code> method it runs.</li>
+<li><strong>Async tests (<code>async throws</code> test methods)</strong> run the test method's suspend
+  points on whatever executor the test's task is scheduled on, and XCTest's
+  runner blocks the calling thread on a semaphore/continuation until that task
+  completes, so the surrounding synchronous test infrastructure doesn't need
+  its own async model.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a small <code>struct Calculator</code> with <code>add</code>, <code>subtract</code>, and a throwing
 <code>divide(_:by:)</code> that throws a <code>DivisionError.byZero</code> error when the divisor

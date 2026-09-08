@@ -784,6 +784,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2402,6 +2424,29 @@ inline diagnostics, a debugger, and Swift Playgrounds for live-executing
 snippets as you type. On Linux or for lightweight editing anywhere, <strong>VS
 Code</strong> with the official "Swift" extension (powered by SourceKit-LSP) works
 well. Either is fine for this course — pick one and move on.</p>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p>When you run <code>swift file.swift</code> or hit Run in Xcode, several distinct tools chain
+together before a single instruction executes:</p>
+<ul>
+<li><strong>The Swift compiler (<code>swiftc</code>)</strong> parses your source into an AST, then lowers it
+  to <strong>SIL</strong> (Swift Intermediate Language) — a Swift-specific IR that's where the
+  compiler enforces exclusivity checking and performs whole-module optimizations
+  (generic specialization, inlining, ARC optimization passes) before handing off to
+  LLVM IR and finally to machine code via LLVM's backend.</li>
+<li><strong>The Swift runtime</strong> is a separate shared library (<code>libswiftCore</code>) linked into
+  every binary. It provides metadata for types (used for reflection, <code>String</code>
+  description, and dynamic casts like <code>as?</code>), the memory allocator hooks for
+  reference counting, and the existential container machinery for protocol types.</li>
+<li><strong>Package/toolchain resolution</strong>: <code>swift build</code>, Xcode, and SwiftPM all resolve
+  which toolchain (Swift version, SDK, target triple) to use before invoking the
+  same underlying <code>swiftc</code> — this is why <code>swift --version</code> and your Xcode's
+  "Swift Language Version" setting must agree, or you'll see ABI-mismatch style
+  errors.</li>
+<li>On Apple platforms, the compiled binary also embeds a <strong>Swift ABI stability</strong>
+  marker; since Swift 5, the compiler emits code that talks to a fixed runtime ABI
+  baked into the OS, which is why apps don't have to bundle the whole Swift runtime
+  themselves on modern OS versions (it ships in the OS instead).</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a file <code>greeter.swift</code> that prints a greeting for three different
 names, one per line, using <code>print</code>. Run it two ways: directly with

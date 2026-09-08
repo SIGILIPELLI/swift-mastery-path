@@ -1597,6 +1597,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2349,6 +2360,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2576,6 +2598,32 @@ middleware rather than repeated per-route:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Vapor is built on SwiftNIO</strong>, an event-loop-based non-blocking I/O engine
+  modeled closely on Netty. Rather than one OS thread per connection, NIO runs a
+  small, fixed pool of <code>EventLoop</code>s (typically one per CPU core), each of which
+  multiplexes many simultaneous connections via the OS's epoll/kqueue readiness
+  APIs — a request's handling code runs <em>on</em> whichever event loop owns that
+  connection's socket, and must never block that thread (blocking one event
+  loop stalls every other connection scheduled on it).</li>
+<li><strong>Routing</strong> compiles your registered routes into a trie (prefix tree) keyed by
+  path components, so matching an incoming request's path against hundreds of
+  routes is a fast tree walk rather than a linear scan through registered
+  closures.</li>
+<li><strong>Middleware chains</strong> are literally nested closures built at startup: each
+  middleware wraps the next <code>Responder</code> in the chain, so a request flowing
+  through N middlewares is N nested (usually <code>async</code>) function calls before
+  reaching your route handler, and the response flows back out through the same
+  nesting in reverse — this is why middleware ordering changes both
+  request-side and response-side behavior.</li>
+<li><strong>Vapor's async handlers integrate with NIO's <code>EventLoopFuture</code> and Swift
+  Concurrency's <code>async/await</code> via bridging shims</strong> (<code>.get()</code> on a future
+  suspends the calling task until NIO's callback fires) — under load, the
+  actual database/network I/O still ultimately goes through NIO's non-blocking
+  event loop, with Swift Concurrency's task suspension layered on top as a
+  more ergonomic way to write the same non-blocking flow.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Extend the <code>TodoStore</code>/routing example with a <code>DELETE /todos/:id</code> route that
 removes a todo by id, returning <code>HTTPStatus.noContent</code> on success and

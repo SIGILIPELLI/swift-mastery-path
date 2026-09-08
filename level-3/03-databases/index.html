@@ -1603,6 +1603,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2531,6 +2553,40 @@ makes their higher-level APIs (and their error messages) far less opaque.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><strong><code>sqlite3_prepare_v2</code> compiles SQL text into SQLite's own bytecode
+program</strong>, run by a virtual machine internal to the SQLite library — the
+<code>OpaquePointer</code> you get back (<code>statement</code>) refers to that compiled program
+plus its execution cursor, not the raw SQL string. Every <code>sqlite3_step</code>
+call resumes that VM until it either produces a row (<code>SQLITE_ROW</code>) or
+finishes (<code>SQLITE_DONE</code>). This is why preparing once and stepping/binding
+repeatedly (e.g. for a batch of inserts, reusing the same prepared
+<code>statement</code> with <code>sqlite3_reset</code> between calls) is dramatically faster than
+re-preparing each time: parsing and query planning happen once, at
+<code>prepare_v2</code>, and every subsequent execution reuses the compiled bytecode.</p>
+<p><strong>Bind parameters are substituted into the bytecode program, never into the
+SQL text</strong> — this is the actual mechanism behind "SQL injection is
+impossible with <code>?</code> placeholders." A string bound via <code>sqlite3_bind_text</code>
+is stored as opaque data in a VM register and compared/inserted as a value;
+it is never re-parsed as SQL syntax, so there is no way for a bound value
+containing <code>; DROP TABLE</code> to be interpreted as a second statement — it can
+only ever be literal text of the query the injected value would supply.
+Interpolating into the SQL string before <code>prepare_v2</code>, by contrast, hands
+attacker-controlled text to SQLite's parser as syntax.</p>
+<p><strong><code>OpaquePointer</code> and manual memory ownership</strong>: Swift's <code>SQLite3</code> module
+is a direct C interop layer, so none of ARC's automatic retain/release
+applies to <code>db</code> or <code>statement</code> — they're opaque C pointers to SQLite's own
+heap allocations, and SQLite (not Swift) owns their lifetime. <code>defer {
+sqlite3_finalize(statement) }</code> and <code>defer { sqlite3_close(db) }</code> exist
+because Swift's runtime has no way to know when these resources are no
+longer needed — unlike a Swift class instance, there's no reference count
+tracking who still points at the prepared statement.</p>
+<p><strong><code>SQLITE_TRANSIENT</code> vs. the alternative <code>SQLITE_STATIC</code></strong> controls whether
+SQLite copies the bound string immediately or trusts it to remain valid for
+the statement's lifetime; passing a Swift <code>String</code>'s temporary C
+representation with <code>SQLITE_STATIC</code> would be a use-after-free the moment
+Swift deallocates that temporary buffer, which is why the module defaults
+to the safer (if slightly costlier) transient copy.</p>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Add an <code>age INTEGER</code> column to the <code>employees</code> table, insert a few rows
 with ages, and write a <code>func averageAge(forRole role: String) -&gt; Double?</code>

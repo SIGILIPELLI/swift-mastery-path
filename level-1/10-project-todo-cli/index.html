@@ -1047,6 +1047,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#stretch-goals" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2524,6 +2546,32 @@ corrupted line is skipped instead of crashing the whole load.</p>
 invocations of the program — an enum-driven command parser, optionals for
 safe parsing, and a struct-based model come together into a small but
 realistic CLI tool.</p>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Reading <code>CommandLine.arguments</code></strong> is one of the few places Swift code
+  directly touches the C-style <code>argv</code>/<code>argc</code> the OS hands your process — the
+  standard library marshals that raw <code>char**</code> into a Swift <code>[String]</code> once, at
+  process start, by validating/copying each C string into Swift's native UTF‑8
+  backed <code>String</code> storage.</li>
+<li>Persisting your todo list to a file (<code>FileManager</code>, <code>Data</code>, <code>JSONEncoder</code>)
+  round-trips through <strong><code>Codable</code></strong>'s reflection-free mechanism: the compiler
+  synthesizes <code>encode(to:)</code>/<code>init(from:)</code> methods at compile time by walking your
+  struct's stored properties (there's no runtime introspection like Objective-C's
+  <code>NSCoding</code> — it's ordinary generated Swift code you could have written by
+  hand), which is why adding a new stored property to your <code>Todo</code> struct
+  automatically participates in encoding/decoding without touching your I/O code.</li>
+<li><strong>Struct value semantics make the "in-memory list" safe by construction</strong>: your
+  <code>[Todo]</code> array can be freely passed to functions like <code>save(_:)</code> or
+  <code>filter(where:)</code> without worrying that a called function mutates your working
+  list out from under you — each call either gets its own copy-on-write
+  reference to the same buffer (cheap) or triggers an actual copy only if it
+  mutates while your original is still alive.</li>
+<li>Command dispatch (<code>switch CommandLine.arguments[1]</code>) is the same enum/string
+  pattern-matching machinery from the control-flow chapter — string cases
+  compile to a sequence of <code>String.==</code> calls (itself a byte-wise/UTF-8-aware
+  comparison), not a hash lookup, unless the compiler judges a jump table
+  worthwhile for a large <code>switch</code>.</li>
+</ul>
 <h2 id="stretch-goals">Stretch goals<a class="headerlink" href="#stretch-goals" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Add an <code>edit &lt;n&gt; &lt;new title&gt;</code> command that replaces a task's title.</li>

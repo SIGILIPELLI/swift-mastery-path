@@ -1378,6 +1378,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2549,6 +2571,34 @@ even though the type itself is visible.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>Package.swift</code> is not a config file — it's executable Swift code.</strong> When
+  you run <code>swift build</code>, SwiftPM first <em>compiles and runs</em> your manifest as a
+  standalone program (linked against the <code>PackageDescription</code> library matching
+  your declared <code>swift-tools-version</code>) to produce the actual package
+  description as data. This is why different <code>swift-tools-version</code> values can
+  expose entirely different manifest APIs — you're really selecting which
+  version of the <code>PackageDescription</code> module your manifest links against.</li>
+<li><strong>Dependency resolution builds a directed graph</strong> of package requirements
+  (version ranges, branch/commit pins) and solves it with a SAT-like algorithm to
+  find a single version per dependency that satisfies every package's
+  constraints simultaneously — the result is pinned into <code>Package.resolved</code> so
+  every subsequent build/CI run resolves identically without re-solving
+  (SwiftPM only re-runs the solver when the manifest's declared requirements
+  change or you explicitly ask it to update).</li>
+<li><strong>Build planning</strong>: SwiftPM computes a full dependency-ordered build graph of
+  targets (a target can only depend on targets/products declared explicitly, no
+  implicit cross-target visibility), then invokes <code>swiftc</code>/the linker per
+  target, module by module — each target compiles into its own <code>.swiftmodule</code>
+  (a serialized AST/interface file), which downstream targets import instead of
+  re-parsing that target's source, dramatically speeding up incremental builds.</li>
+<li><strong>Test targets</strong> get compiled into a separate executable/bundle linked
+  against XCTest and every target under test, which is why an internal
+  (non-<code>public</code>) symbol is visible to <code>@testable import</code> — that annotation
+  tells the compiler to relax access control for that one imported module in
+  the test binary only.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Run <code>swift package init --type executable</code> for a package named
 <code>TemperatureKit</code>. Split the logic across two files in <code>Sources/

@@ -1558,6 +1558,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2530,6 +2552,35 @@ on a number less than 100 due to lost updates; the actor guarantees exactly
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>async</code>/<code>await</code> doesn't create threads.</strong> An <code>async</code> function's suspension
+  points (<code>await</code>) are compiled into an explicit <strong>state machine</strong>: the
+  compiler splits the function's body at each <code>await</code> into separate resumable
+  chunks, and calling an async function creates a heap-allocated "task frame"
+  that records which chunk to resume and what local state to restore. This is
+  fundamentally different from a callback closure — the compiler is doing the
+  continuation-passing transformation for you.</li>
+<li><strong>Structured concurrency's <code>Task</code> runs on Swift's cooperative thread pool</strong> —
+  a fixed-size pool sized around the number of CPU cores (not one thread per
+  task). When a task hits <code>await</code> and genuinely suspends (waiting on I/O, a
+  lock, or another task), it gives its thread back to the pool to run other
+  ready tasks, and is rescheduled onto <em>any</em> available thread when it resumes —
+  this is why you must never assume an <code>async</code> function resumes on the same
+  thread it suspended on.</li>
+<li><strong>Actors enforce isolation via a serial executor</strong>, not a lock. Every actor
+  has an implicit mailbox/serial queue; calling a method on an actor from
+  outside actually enqueues that call and <code>await</code>s the actor's executor
+  processing it, guaranteeing at most one piece of actor code runs at a time —
+  the compiler statically checks that you never touch actor-isolated state
+  without going through this <code>await</code>-gated path, catching data races at compile
+  time rather than requiring you to remember to lock.</li>
+<li><strong><code>Task { }</code></strong> captures the current actor/executor context implicitly and
+  schedules a new top-level unit of work on the cooperative pool; a child task
+  created inside a <code>TaskGroup</code> is tracked by its parent so that structured
+  concurrency can guarantee no task outlives its enclosing scope (cancellation
+  propagates down this same parent/child tree).</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write an <code>actor BankAccount</code> with a private <code>balance: Int</code> starting at <code>0</code>
 and a method <code>func deposit(_ amount: Int)</code>. Using <code>withTaskGroup</code>, launch 50

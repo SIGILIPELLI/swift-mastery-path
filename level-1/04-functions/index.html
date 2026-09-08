@@ -890,6 +890,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2512,6 +2534,34 @@ arguments, and nested inside other functions.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Parameter labels vs. parameter names</strong> exist only at the source and type-checking
+  level. By the time a function reaches SIL/LLVM, argument labels are erased —
+  <code>func greet(to name: String)</code> and a hypothetical unlabeled version compile to
+  the same calling convention. Labels are purely a call-site readability/overload
+  disambiguation feature, so they add zero runtime cost.</li>
+<li><strong>Calling convention</strong>: Swift functions pass small value types (structs that
+  fit in a couple of machine words, like <code>Int</code>, <code>Double</code>, small structs) directly
+  in registers, following the platform's Swift calling convention (distinct from
+  C's). Larger structs and any type containing a class reference or existential
+  are passed indirectly (by address) with the compiler inserting the necessary
+  copies — you don't write this, but it's why "just returning a struct" is
+  usually free while returning a huge struct can trigger a hidden memory copy.</li>
+<li><strong><code>inout</code> parameters</strong> are implemented via a compiler-enforced technique called
+  "copy-in, copy-out" for computed properties and subscripts, but for plain
+  stored variables the compiler passes a real pointer directly — either way, the
+  exclusivity checker (<code>-enforce-exclusivity</code>) inserts a runtime or static check
+  that the same storage isn't accessed twice (e.g. through aliasing) while the
+  <code>inout</code> access is active, which is what makes <code>swap(&amp;a, &amp;a)</code>-style bugs a
+  runtime trap rather than silent corruption.</li>
+<li><strong>Function values as first-class citizens</strong>: a function name used as a value
+  (<code>let f = greet</code>) is packaged into a "thick function" representation — a
+  pointer to the function plus an optional context pointer for captured state —
+  which is exactly the same representation a closure uses (see the closures
+  chapter). A plain top-level function just happens to have a null context
+  pointer.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a function <code>describe(number:)</code> that takes an <code>Int</code> and returns a
 <code>String</code> describing whether it's negative, zero, or positive, and whether

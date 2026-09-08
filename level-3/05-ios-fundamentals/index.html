@@ -1648,6 +1648,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2493,6 +2515,44 @@ for larger apps.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><strong>SwiftUI's <code>View.body</code> doesn't mutate a live view tree — it produces a new
+lightweight value tree every time, and the framework diffs it.</strong> A <code>View</code>
+in SwiftUI is a struct, not a <code>UIView</code>; each time state changes (a
+<code>@State</code>, <code>@Observable</code> property, or <code>scenePhase</code> change), SwiftUI calls
+<code>body</code> again to get a fresh description of what the UI <em>should</em> look like,
+then diffs the new tree against the previous one, node by node, using each
+view type's structural identity. Where two nodes are the "same" view at the
+same position, it computes the minimal set of underlying <code>UIView</code>/<code>CALayer</code>
+property updates rather than tearing down and rebuilding — this is why
+SwiftUI views are cheap to recreate (they're just structs) while the actual
+UIKit-backed render tree underneath changes only incrementally.</p>
+<p><strong>Identity, not equality, drives that diff.</strong> SwiftUI infers identity from
+a view's position in the tree and its type by default (<code>Text</code>, <code>Toggle</code>,
+etc. at index 2 of a given parent are considered "the same view" across
+updates), which is exactly why <code>List(names, id: \.self)</code> with duplicate
+strings breaks: SwiftUI can no longer tell which row is which between
+diffs, so it may reuse/reorder the wrong row's underlying state. An
+<code>Identifiable</code> model with a genuinely unique <code>id</code> gives the diff algorithm
+a stable key independent of array position, so insertions/removals/reorders
+update the correct rows instead of ones that merely happen to sit in the
+same index.</p>
+<p><strong><code>@Observable</code> (and its predecessor <code>@Published</code>/<code>ObservableObject</code>) work
+by instrumenting property access, not by watching the whole object.</strong>
+<code>@Observable</code>'s macro-generated code registers a dependency only on the
+specific stored properties a view's <code>body</code> actually reads during that
+render pass; mutating an unread property later doesn't trigger a
+re-render of that view. This fine-grained tracking is why replacing a
+whole array-backed <code>TaskStore</code> naively (recreating it) triggers far more
+re-diffing than mutating a single tracked property in place.</p>
+<p><strong>The UIKit lifecycle underneath is still real.</strong> <code>viewDidLoad</code> fires
+exactly once per <code>UIViewController</code> instance, right after its view is
+loaded into memory (which itself is lazy — accessing <code>.view</code> for the first
+time is what triggers <code>loadView</code>/<code>viewDidLoad</code>, not <code>init</code>); <code>scenePhase</code>
+transitions in SwiftUI are a declarative projection of the same
+<code>UIApplicationDelegate</code>/<code>UISceneDelegate</code> callbacks UIKit apps have always
+received, which is why <code>@UIApplicationDelegateAdaptor</code> lets you drop back
+into the AppDelegate world without SwiftUI and UIKit fighting each other.</p>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Sketch (don't need to run) a SwiftUI <code>TaskListView</code> backed by an
 <code>@Observable class TaskStore</code> holding <code>[Task]</code> (where <code>Task</code> has <code>id</code>,

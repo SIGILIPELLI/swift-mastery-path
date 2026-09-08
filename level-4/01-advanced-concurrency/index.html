@@ -1912,6 +1912,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2505,6 +2527,39 @@ use <code>values</code>).</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>TaskGroup</code> builds an explicit parent/child task tree</strong> at runtime: adding a
+  child task (<code>group.addTask { }</code>) registers it with the group's underlying
+  task record, and the group's <code>for await</code> iteration polls each child's result
+  as it completes — critically, if the group's own task is cancelled or exits
+  its scope (including via a thrown error), the runtime automatically walks
+  this tree and propagates cancellation to every still-running child, which is
+  the actual mechanism behind "structured concurrency guarantees no task
+  outlives its scope."</li>
+<li><strong>Cancellation is cooperative, implemented as a checked flag, not a forced
+  interrupt.</strong> Calling <code>task.cancel()</code> flips an atomic flag on that task's
+  shared state; nothing stops automatically. Code must explicitly check
+  <code>Task.isCancelled</code> or call <code>try Task.checkCancellation()</code> (which throws
+  <code>CancellationError</code>) at appropriate points — a tight non-async loop that
+  never checks cancellation will keep running forever regardless of being
+  "cancelled."</li>
+<li><strong>Custom executors and <code>AsyncSequence</code></strong> — implementing an executor means
+  providing the low-level scheduling primitive Swift Concurrency's runtime
+  calls into to actually run a job (typically wrapping your own thread/queue).
+  <code>AsyncSequence</code>'s <code>for await</code> loop compiles to repeated calls to
+  <code>makeAsyncIterator()</code>/<code>next()</code>, each an <code>async</code> call that can genuinely
+  suspend the consuming task until the next element becomes available — the
+  same state-machine transformation underlying every <code>async</code> function applies
+  here too, just invoked in a loop.</li>
+<li><strong><code>@MainActor</code> isolation</strong> is enforced identically to any other actor
+  isolation (see the concurrency chapter) — code marked <code>@MainActor</code> runs on a
+  specific global-actor-owned serial executor that happens to be backed by the
+  main thread/run loop, and calling it from off-main-thread code requires an
+  <code>await</code> hop that the compiler statically enforces, catching "touched UI from
+  a background thread" bugs at compile time instead of as an intermittent
+  crash.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write an <code>AsyncSequence</code> called <code>Paginated&lt;Element&gt;</code> that simulates fetching
 "pages" of data from a server: given a total item count and a page size, its

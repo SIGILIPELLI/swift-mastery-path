@@ -991,6 +991,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2514,6 +2536,37 @@ under the hood:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><strong>An enum without associated values is just a small integer under the
+hood.</strong> With ≤256 cases and no payload, Swift represents a value as a
+single byte holding a discriminator tag — <code>Direction.north</code> compiles to
+essentially the constant <code>0</code>. The compiler picks the smallest integer width
+that fits the case count, so simple enums are as cheap as a raw <code>Int8</code>, and
+<code>switch</code> over one compiles to a jump table, not a chain of comparisons —
+that's part of why exhaustiveness matters: the compiler is building a table
+sized to the case count, and a new case genuinely requires a new table
+entry, which is what it flags as a compile error.</p>
+<p><strong>Enums with associated values are tagged unions</strong> — the same
+discriminator tag, plus enough storage for the <em>largest</em> case's payload.
+<code>NetworkResult</code>'s layout reserves space for a tag byte and the largest of
+<code>(String)</code>, <code>(Int, String)</code>, or nothing — every instance is sized for the
+worst case, with unused bytes for smaller cases. This is exactly what a C
+<code>union</code> with a manual tag field does, except the compiler generates and
+enforces the tag/switch correspondence for you, which is why you can't read
+<code>.success</code>'s <code>data</code> without going through a <code>switch</code> or <code>if case</code> — there's
+no type-safe way to know which payload variant is live except by checking
+the tag.</p>
+<p><strong>Indirect cases and recursion</strong>: an enum case whose payload contains the
+enum itself (e.g. a <code>case node(value: Int, next: LinkedList)</code>) can't have a
+fixed size — the compiler would need infinite storage to lay it out
+directly. Marking the case (or the whole enum) <code>indirect</code> makes Swift box
+that case's payload on the heap and store just a pointer inline, exactly
+the same mechanism a class provides implicitly, opted into per-case.</p>
+<p><strong>Why <code>Optional</code> really is "just an enum"</strong>: <code>Optional&lt;Wrapped&gt;.none</code> and
+<code>.some(Wrapped)</code> follow the identical tagged-union layout described above —
+which is also why <code>if let</code> and <code>switch</code> work uniformly across <code>Optional</code>
+and your own enums; they're the same runtime shape, not special-cased
+syntax.</p>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Model a vending machine with <code>enum VendingItem: String, CaseIterable { case soda, chips, candy }</code>
 where each case has a price via a computed property (a <code>switch</code> over <code>self</code>

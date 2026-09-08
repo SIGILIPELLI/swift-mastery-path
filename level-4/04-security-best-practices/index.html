@@ -2018,6 +2018,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2521,6 +2543,36 @@ else) applies regardless of platform availability.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Keychain storage isn't "just an encrypted file you read/write"</strong> — it's a
+  separate system daemon (<code>securityd</code>/<code>SecItem</code> on Apple platforms) that your
+  process talks to via IPC (XPC). Each item is stored encrypted with a key
+  derived from the device's hardware Secure Enclave (where available) and the
+  device passcode, and access-control flags (<code>kSecAttrAccessible*</code>) determine
+  <em>when</em> the OS is even willing to decrypt the item for you (e.g.
+  <code>whenUnlockedThisDeviceOnly</code> refuses access while the device is locked,
+  enforced by the OS, not by your app's code).</li>
+<li><strong>ATS (App Transport Security) enforcement</strong> happens at the <code>URLSession</code>
+  layer before a single byte goes over the network — the OS checks the target
+  host's TLS configuration against ATS's minimum requirements (TLS version,
+  forward secrecy cipher suites) and refuses the connection outright if it
+  doesn't qualify, which is why ATS exceptions are declared in <code>Info.plist</code>
+  rather than checked in your Swift code — the enforcement point is beneath
+  your code, in the platform's networking stack.</li>
+<li><strong>Certificate pinning</strong> works by intercepting <code>URLSessionDelegate</code>'s
+  <code>didReceiveChallenge</code> callback (fired mid-TLS-handshake, before the request
+  body is sent) and comparing the server's presented certificate/public key
+  against a bundled expected value — this happens <em>in addition to</em>, not
+  instead of, normal system trust-chain validation, so pinning failures are a
+  separate rejection path from "invalid certificate."</li>
+<li><strong>String literals containing secrets are visible in the compiled binary</strong> as
+  plain readable bytes in the <code>__TEXT</code> segment (Swift string literals aren't
+  obfuscated by default) — this is a mechanical fact worth internalizing: a
+  hardcoded API key isn't "hidden" by compilation, it's trivially extractable
+  with <code>strings</code> on the binary, which is precisely why secrets belong in
+  Keychain or a remote config service instead.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Write a function <code>func sign(payload: String, secret: SymmetricKey) -&gt;
 String</code> that computes an HMAC-SHA256 over the payload and returns it

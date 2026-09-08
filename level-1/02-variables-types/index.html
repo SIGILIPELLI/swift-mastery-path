@@ -834,6 +834,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2488,6 +2510,32 @@ named type.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><code>let</code> and <code>var</code> aren't just a style preference — the compiler treats them as
+different capabilities on the same storage:</p>
+<ul>
+<li>A <code>let</code> binding is checked at <strong>compile time</strong> for single-assignment. The
+  compiler's SIL-level definite-initialization pass proves every <code>let</code> is
+  assigned exactly once along every code path before first use; this is a static
+  proof, not a runtime lock, so it costs nothing at runtime.</li>
+<li>Swift's <strong>type inference</strong> doesn't guess — it runs a constraint-solving pass
+  (part of the type checker) that unifies the type of the right-hand expression
+  with the variable's type variable. This is also why deeply nested expressions
+  (chained <code>+</code>, closures, literals) can make compile times explode: the solver's
+  search space grows combinatorially with ambiguity, which is why Swift sometimes
+  asks you to add an explicit type annotation to "help" it.</li>
+<li>Numeric and string <strong>literals</strong> (<code>42</code>, <code>3.14</code>, <code>"hi"</code>) aren't typed until the
+  context forces them — they conform to <code>ExpressibleByIntegerLiteral</code>,
+  <code>ExpressibleByFloatLiteral</code>, <code>ExpressibleByStringLiteral</code>, and the compiler
+  calls the appropriate <code>init(literal:)</code> for whatever concrete type the literal
+  ends up bound to. That's why <code>let x: Int8 = 5</code> and <code>let y: Double = 5</code> both
+  compile from the same literal <code>5</code>.</li>
+<li><strong>String interpolation</strong> compiles to calls against
+  <code>ExpressibleByStringInterpolation</code> and <code>StringInterpolationProtocol</code> —
+  <code>"\(name)"</code> desugars into a sequence of <code>appendLiteral</code> / <code>appendInterpolation</code>
+  calls building a <code>String.StringInterpolation</code> buffer, not naive string
+  concatenation.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Declare constants for a person's <code>name</code> (String), <code>age</code> (Int), and <code>height</code>
 (Double, in meters). Use string interpolation to print a single sentence

@@ -1182,6 +1182,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2608,6 +2630,34 @@ signaling "this behavior is not meant to change":</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Method dispatch for classes is virtual by default.</strong> Every non-<code>final</code>,
+  non-<code>private</code> class method is invoked through a <strong>vtable</strong> (virtual dispatch
+  table) — a per-class array of function pointers built at compile time, one
+  slot per overridable method, inherited and possibly overridden down the class
+  hierarchy. Calling <code>animal.makeSound()</code> compiles to: load the object's
+  isa/metadata pointer, index into its vtable at the <code>makeSound</code> slot, call
+  through that pointer. This indirection is what makes overriding work, and it's
+  also strictly more expensive than a direct call (no inlining across the call,
+  extra pointer chase) — which is why marking a class or method <code>final</code> lets the
+  optimizer devirtualize it into a direct, potentially inlined call.</li>
+<li><strong>Designated vs. convenience initializers</strong> encode a compiler-checked
+  initialization chain: a designated initializer must call a superclass
+  designated initializer (or fully initialize all of its own class's stored
+  properties) before doing anything else; a convenience initializer must
+  delegate to another initializer <em>in the same class</em>. The compiler statically
+  verifies "two-phase initialization" — phase 1 walks up the chain setting every
+  stored property in every class in the hierarchy; phase 2 walks back down
+  running <code>didSet</code>s, calling further methods, and letting you use <code>self</code> freely
+  — so that no class can ever observe another class's partially-initialized
+  state.</li>
+<li><strong>Overriding and <code>super.method()</code></strong> calls resolve at compile time to a direct,
+  non-virtual call into the specific superclass implementation (bypassing the
+  vtable lookup entirely) — <code>super</code> calls are one of the few places the compiler
+  intentionally skips dynamic dispatch, because the target is always
+  statically known.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Define a protocol <code>Payable</code> with a computed property <code>amountDue: Double</code> and
 a method <code>pay() -&gt; String</code>. Add a protocol extension giving <code>pay()</code> a

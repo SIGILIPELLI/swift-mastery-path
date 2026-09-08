@@ -913,6 +913,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2261,6 +2272,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2428,6 +2450,41 @@ at the cost of not preserving insertion order.</p>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="p">]</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="bp">print</span><span class="p">(</span><span class="n">studentsBySubject</span><span class="p">[</span><span class="s">&quot;Math&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">??</span><span class="w"> </span><span class="p">[])</span><span class="w">   </span><span class="c1">// [&quot;Ada&quot;, &quot;Alan&quot;]</span>
 </code></pre></div>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p><strong>Copy-on-write (COW) is not a language feature — it's a data structure
+technique the standard library implements itself.</strong> <code>Array</code>, <code>Set</code>, and
+<code>Dictionary</code> are all thin Swift structs that wrap a single property: a
+pointer to a heap-allocated buffer holding the actual elements, plus a
+reference count on that buffer (via Swift's normal class reference
+counting, since the buffer is a private class instance under the hood).
+<code>var a = [1, 2, 3]; var b = a</code> copies the <em>struct</em> — 8 bytes, one pointer —
+not the buffer. Both <code>a</code> and <code>b</code> now point at the same buffer, and its
+retain count is 2.</p>
+<p>The copy only actually happens the moment you mutate one of them. Every
+mutating method (<code>append</code>, <code>remove</code>, subscript assignment, ...) starts with
+<code>isKnownUniquelyReferenced(&amp;buffer)</code> — a runtime check on the buffer's
+retain count. If it's 1 (nobody else points at it), the buffer is mutated
+in place: no allocation, no copy. If it's &gt;1 (as with <code>a</code>/<code>b</code> above), the
+buffer is copied <em>first</em>, <code>b</code>'s pointer is repointed at the new copy, and
+<em>then</em> the mutation happens on the new buffer. This is why <code>b.append(4)</code>
+leaves <code>a</code> at <code>[1, 2, 3]</code> while <code>b</code> becomes <code>[1, 2, 3, 4]</code> — value
+semantics are preserved, but the cost of the copy is deferred until it's
+actually needed, and skipped entirely if it never is.</p>
+<p><strong><code>Array</code> growth</strong> works the same way as <code>ArrayList</code>/<code>std::vector</code>:
+appending past the buffer's capacity allocates a new buffer at roughly 2x
+the old capacity and moves every element over — this is why <code>reserveCapacity</code>
+matters for large known-size arrays (it avoids the O(log n) reallocations),
+and why <code>append</code> is amortized O(1) rather than worst-case O(1).</p>
+<p><strong><code>Dictionary</code> and <code>Set</code></strong> are open-addressed hash tables. Every key must
+be <code>Hashable</code>; Swift computes <code>hashValue</code> via <code>hasher.combine</code>, mixes it
+with a per-process random seed (to make hash-flooding attacks
+non-deterministic across runs), and uses the result to pick a bucket. A
+collision probes forward to the next open bucket rather than chaining, which
+is why <code>contains</code>/subscript lookup is O(1) <em>on average</em> but degrades if the
+hash function distributes poorly. This is also the mechanical reason
+iteration order is unspecified: it reflects bucket layout, not insertion
+order, and can change across insertions/removals or even across process
+runs due to the random seed.</p>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Given <code>let words = ["swift", "is", "expressive", "and", "safe"]</code>, use <code>map</code>
 to produce an array of their lengths, <code>filter</code> to keep only words with more

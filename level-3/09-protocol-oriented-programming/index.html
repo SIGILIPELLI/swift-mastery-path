@@ -1782,6 +1782,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2327,6 +2338,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2543,6 +2565,40 @@ existing member of the same name:</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Protocol extensions provide default implementations that are statically
+  (not dynamically) dispatched</strong> unless the requirement is also declared in the
+  protocol itself. This is the single most-tripped-over mechanic in POP: if a
+  method exists <em>only</em> in a protocol extension (not listed as a protocol
+  requirement), calling it through a value typed as the concrete type resolves
+  at compile time directly to that default implementation — but calling it
+  through a value typed as the <em>protocol</em> (an existential) also resolves to the
+  same default, ignoring any same-named method a conforming type defines that
+  wasn't declared as a protocol requirement. Only requirements actually listed
+  in the <code>protocol { }</code> block get witness-table (dynamic) dispatch; everything
+  else added purely via extension is resolved statically like a regular
+  function overload.</li>
+<li><strong><code>associatedtype</code></strong> is what makes a protocol generic without generic syntax
+  — the compiler treats a protocol with associated types as a template; each
+  conforming type fills in the actual type, and Swift builds a specialized
+  witness table per conformance rather than one shared table, which is also
+  precisely why protocols with associated types can't be used as plain
+  existential types (<code>any Shape</code> won't compile if <code>Shape</code> has an
+  <code>associatedtype</code>) — there is no single fixed-shape witness table that could
+  represent every possible associated-type substitution simultaneously
+  (Swift's newer "primary associated types" and existential features relax
+  this in specific, still-constrained ways).</li>
+<li><strong><code>some Protocol</code> (opaque return types)</strong> let the compiler know the <em>concrete</em>
+  return type at the call site (even though the caller's code doesn't spell it
+  out), so calls against it use direct witness-table dispatch resolved at
+  compile time with no existential container — this is why <code>some Protocol</code> is
+  generally faster than returning <code>any Protocol</code> for the same value.</li>
+<li><strong>Protocol conformance can be retroactively added via extension</strong> to types
+  you don't own (even stdlib types) because conformance is a purely
+  compile-time/witness-table concept attached at the point of declaration, not
+  baked into the type's own memory layout the way class inheritance is.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Define a protocol <code>Flyable</code> with a default-implemented <code>func fly() -&gt;
 String</code> returning <code>"Flying"</code>, and a protocol <code>Swimmable</code> with a

@@ -1715,6 +1715,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works-deeper-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works (deeper mechanics)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works-deeper-mechanics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works (deeper mechanics)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2546,6 +2568,38 @@ that line would never appear.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works-deeper-mechanics">How It Actually Works (deeper mechanics)<a class="headerlink" href="#how-it-actually-works-deeper-mechanics" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>ARC is a compile-time analysis, not a runtime garbage collector.</strong> The
+  compiler statically inserts <code>retain</code>/<code>release</code> calls (technically
+  <code>swift_retain</code>/<code>swift_release</code>, which atomically increment/decrement an
+  object's reference count stored in its heap header) at every point a strong
+  reference is created or destroyed — assignment, parameter passing, capture,
+  scope exit. There's no separate GC thread pausing your program; the cost is
+  paid inline, deterministically, exactly where the compiler decided a
+  retain/release was needed.</li>
+<li><strong>The optimizer aggressively removes redundant retain/release pairs</strong> —
+  if it can prove an object is already kept alive across a region (e.g. it's
+  a <code>let</code> local never escaping), it elides matching retain+release calls
+  entirely. This is why <code>-Onone</code> (debug builds) can be measurably slower for
+  ARC-heavy code than <code>-O</code> (release) — many retain/release calls debug builds
+  emit conservatively are provably unnecessary and get removed at <code>-O</code>.</li>
+<li><strong>Weak references need a side table.</strong> A plain strong reference count lives
+  directly in the object's heap header, but supporting <code>weak</code> (a reference that
+  can observe deallocation and self-zero to <code>nil</code>) requires an extra indirection:
+  the runtime allocates a side-table entry tracking both a strong count and a
+  separate "weak/unowned" count; the object's storage isn't actually freed until
+  <em>both</em> counts hit zero, so a lingering weak reference keeps a small side-table
+  allocation (not the object itself) alive slightly longer.</li>
+<li><strong>Retain cycles</strong> happen when two objects hold strong references to each
+  other — neither's count ever reaches zero, so <code>deinit</code> never runs and the
+  memory leaks for the process's lifetime. <code>weak</code>/<code>unowned</code> break the cycle by
+  having one side hold a reference that doesn't increment the strong count;
+  <code>unowned</code> additionally skips the side-table safety check entirely (assuming
+  you've proven the referenced object always outlives the reference), trading
+  a runtime trap-on-misuse safety net for a slightly cheaper, non-optional
+  reference.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Model a <code>Parent</code>/<code>Child</code> pair where <code>Parent</code> holds <code>var children: [Child]</code>
 (strong, an array can own many children safely) and each <code>Child</code> holds

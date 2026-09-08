@@ -952,6 +952,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2283,6 +2294,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2476,6 +2498,39 @@ structs, Swift uses protocols and extensions instead (covered in
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<p>This is the single most consequential design decision in Swift, and the two
+kinds compile to genuinely different machine-level behavior:</p>
+<ul>
+<li><strong>Structs are copied by value at assignment</strong>, but the compiler doesn't
+  necessarily emit a real memcpy every time. For simple structs like <code>Point</code>
+  above (two <code>Double</code>s), an assignment <code>let p2 = p1</code> really is a bit-for-bit copy
+  of 16 bytes — cheap, stack-allocated, no heap traffic, no ARC involved at all.
+  Structs containing only other value types (numbers, other structs, enums) need
+  no reference counting whatsoever; the compiler can prove there's nothing to
+  retain/release.</li>
+<li><strong>Classes are always heap-allocated and reference-counted.</strong> <code>let obj2 = obj1</code>
+  copies a pointer, not the object, and the compiler inserts a <code>retain</code> call at
+  that copy and a matching <code>release</code> when <code>obj2</code>'s scope ends (see the memory
+  management chapter for ARC's full mechanics). Two variables pointing at the
+  same class instance observe each other's mutations — that's reference
+  semantics, and it's a direct consequence of both variables holding the same
+  heap address.</li>
+<li><strong>Structs containing a class reference or an array/dictionary/string</strong> are
+  where it gets subtle: the struct itself copies its fields, but if one of those
+  fields is a class reference, the copy duplicates the <em>pointer</em>, not the
+  pointed-to object — so two "independent" struct copies can still observe
+  mutations through a shared class field. <code>Array</code>, <code>String</code>, and <code>Dictionary</code>
+  solve this differently via copy-on-write (their internal storage buffer is
+  only actually duplicated the moment one copy is mutated while another
+  reference to the same buffer is still alive — checked via <code>isKnownUniquelyReferenced</code>
+  on the buffer's own reference count).</li>
+<li><strong>Memberwise initializers</strong> are synthesized by the compiler only for structs
+  (and only when you don't write your own <code>init</code>), because the compiler can
+  trivially prove the exact field layout needed; classes never get this for free
+  because inheritance means the "complete" set of fields isn't knowable purely
+  from the class's own declaration.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Define a <code>struct BankAccount</code> with a <code>var balance: Double</code>, and <code>mutating</code>
 methods <code>deposit(_:)</code> and <code>withdraw(_:)</code> (withdraw should refuse — print an

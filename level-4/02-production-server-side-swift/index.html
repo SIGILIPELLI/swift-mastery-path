@@ -1951,6 +1951,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2305,6 +2316,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#how-it-actually-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How It Actually Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#exercise" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2489,6 +2511,35 @@ query language (e.g. filtering on <code>status=unhealthy</code>) expects.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="how-it-actually-works">How It Actually Works<a class="headerlink" href="#how-it-actually-works" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Graceful shutdown handling</strong> relies on registering a signal handler
+  (<code>SIGTERM</code>/<code>SIGINT</code>) that stops the SwiftNIO event loop group from accepting
+  new connections while letting in-flight requests' tasks run to completion
+  before the process actually exits — this is why a production server's
+  shutdown path is asynchronous itself (draining, not an immediate <code>exit()</code>),
+  and getting it wrong is a common source of dropped requests during
+  deployments.</li>
+<li><strong>Environment-based configuration</strong> (reading <code>ProcessInfo.processInfo.environment</code>)
+  is resolved once at process start — the OS hands your process a full
+  environment block at <code>exec()</code> time, and Swift's <code>ProcessInfo</code> is a thin
+  wrapper caching that snapshot, which is why environment variables changed
+  after your process starts (e.g. via a sibling shell) are never observed
+  without a restart.</li>
+<li><strong>Logging backends (<code>swift-log</code>)</strong> use a protocol-witness-based
+  "bootstrap once" pattern: <code>LoggingSystem.bootstrap(...)</code> installs a factory
+  closure exactly once (subsequent calls are ignored, enforced via an atomic
+  flag much like <code>static let</code>'s one-time initialization), and every <code>Logger</code>
+  instance created afterward calls through to whatever concrete backend that
+  factory produced — this indirection is what lets libraries log without
+  knowing or caring which concrete logging backend the final application
+  chooses.</li>
+<li><strong>Health checks and readiness probes</strong> typically hit a lightweight route
+  handled entirely on the event loop without touching the database pool,
+  specifically so that a probe never contends with real traffic for a pooled
+  connection under load — a subtlety worth getting right so a health check
+  doesn't itself become a bottleneck.</li>
+</ul>
 <h2 id="exercise">Exercise<a class="headerlink" href="#exercise" title="Permanent link">&para;</a></h2>
 <p>Extend the <code>HealthCheck</code> type with a <code>queueDepth: Int</code> field and treat
 <code>queueDepth &gt; 100</code> as <code>degraded</code> and <code>queueDepth &gt; 500</code> as <code>unhealthy</code>
