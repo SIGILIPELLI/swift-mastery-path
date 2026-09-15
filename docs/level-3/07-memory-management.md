@@ -257,6 +257,10 @@ that line would never appear.
   a runtime trap-on-misuse safety net for a slightly cheaper, non-optional
   reference.
 
+## 🔀 See this in another language
+
+- [C — 05 · Memory Management Deep Dive](https://sigilipelli.github.io/c-mastery-path/level-3/05-memory-management-deep-dive/)
+
 ## Exercise
 
 Model a `Parent`/`Child` pair where `Parent` holds `var children: [Child]`

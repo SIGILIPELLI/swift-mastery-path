@@ -231,6 +231,12 @@ produced, that's a sign you wanted `do`/`catch` instead.
   actual error value — mechanically this is a `do/catch` wrapped around the call
   where every `catch` clause is synthesized to just produce `nil`.
 
+## 🔀 See this in another language
+
+- [JavaScript — 07 · Error Handling Advanced](https://sigilipelli.github.io/javascript-mastery-path/level-2/07-error-handling-advanced/)
+- [C — 06 · Error Handling Conventions](https://sigilipelli.github.io/c-mastery-path/level-2/06-error-handling/)
+- [C++ — 08 · Error Handling with Exceptions](https://sigilipelli.github.io/cpp-mastery-path/level-2/08-error-handling-exceptions/)
+
 ## Exercise
 
 Define an enum `BankError: Error` with cases `insufficientFunds(shortfall:

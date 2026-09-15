@@ -245,6 +245,10 @@ Hello from Int
   compile-time/witness-table concept attached at the point of declaration, not
   baked into the type's own memory layout the way class inheritance is.
 
+## 🔀 See this in another language
+
+- [MATLAB — 01 · Object-Oriented Programming in MATLAB](https://sigilipelli.github.io/matlab-mastery-path/level-3/01-oop-matlab/)
+
 ## Exercise
 
 Define a protocol `Flyable` with a default-implemented `func fly() ->

@@ -189,3 +189,9 @@ pulled out of a load balancer's rotation without a human noticing first.
   `swift:6.0-jammy-slim`) to shrink the final image further, and note what
   breaks (missing shell, missing `curl` for the `HEALTHCHECK` above) that
   you'd need to work around.
+
+## 🔀 See this in another language
+
+- [TypeScript — 06 · Deployment with Docker](https://sigilipelli.github.io/typescript-mastery-path/level-4/06-deployment-docker/)
+- [C# — 07 · Deployment (Docker for .NET)](https://sigilipelli.github.io/csharp-mastery-path/level-4/07-deployment-docker/)
+- [Go — 06 · Deployment with Docker](https://sigilipelli.github.io/go-mastery-path/level-4/06-deployment-docker/)

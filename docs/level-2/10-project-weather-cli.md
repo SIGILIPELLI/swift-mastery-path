@@ -544,3 +544,9 @@ Executed 9 tests, with 0 failures
   method decodes a completely different `Decodable` type with no changes.
 
 Completing this project means you're ready for **Level 3 · Advanced**.
+
+## 🔀 See this in another language
+
+- [Python — 10 · Project — Weather/Data CLI](https://sigilipelli.github.io/python-mastery-path/level-2/10-project-weather-cli/)
+- [C# — 10 · Project — Weather CLI](https://sigilipelli.github.io/csharp-mastery-path/level-2/10-project-weather-cli/)
+- [Go — 10 · Project — Weather CLI](https://sigilipelli.github.io/go-mastery-path/level-2/10-project-weather-cli/)

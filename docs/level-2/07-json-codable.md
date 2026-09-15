@@ -240,6 +240,12 @@ print(decodeProduct(from: badData) ?? "decoding failed")
   it's descended through so it can report exactly where in a large JSON
   document things went wrong.
 
+## 🔀 See this in another language
+
+- [JavaScript — 05 · Working with JSON & Fetch API](https://sigilipelli.github.io/javascript-mastery-path/level-2/05-json-fetch/)
+- [TypeScript — 08 · Working with JSON/APIs](https://sigilipelli.github.io/typescript-mastery-path/level-2/08-working-with-json-apis/)
+- [C# — 07 · Working with JSON (System.Text.Json)](https://sigilipelli.github.io/csharp-mastery-path/level-2/07-json-system-text-json/)
+
 ## Exercise
 
 Model this JSON with a `Codable` struct (use `CodingKeys` for the mismatched
