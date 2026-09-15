@@ -1,3 +1,7 @@
+---
+description: "Closures Advanced — Level 1's closure lesson covered syntax and basic capturing. Now the harder question: what exactly does a closure capture, and how…"
+---
+
 # 04 · Closures Advanced
 
 [Level 1's closure lesson](../level-1/09-closures-intro.md) covered syntax

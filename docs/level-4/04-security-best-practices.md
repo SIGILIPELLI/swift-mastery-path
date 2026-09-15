@@ -1,3 +1,7 @@
+---
+description: "Security Best Practices — Swift ships CryptoKit, a modern, misuse-resistant cryptography API, as part of the standard toolchain — no external dependency…"
+---
+
 # 04 · Security Best Practices
 
 Swift ships `CryptoKit`, a modern, misuse-resistant cryptography API, as

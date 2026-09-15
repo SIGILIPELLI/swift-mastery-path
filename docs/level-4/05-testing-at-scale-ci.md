@@ -1,3 +1,7 @@
+---
+description: "Testing at Scale & CI — A test suite that takes 45 minutes and can't tell you why it failed stops being useful long before a codebase gets large. This…"
+---
+
 # 05 · Testing at Scale & CI
 
 A test suite that takes 45 minutes and can't tell you *why* it failed stops

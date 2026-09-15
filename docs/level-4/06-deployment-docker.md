@@ -1,3 +1,7 @@
+---
+description: "Deployment (Docker) — Docker packages a Swift executable together with its exact runtime dependencies into a portable image — the same image runs…"
+---
+
 # 06 · Deployment (Docker)
 
 Docker packages a Swift executable together with its exact runtime

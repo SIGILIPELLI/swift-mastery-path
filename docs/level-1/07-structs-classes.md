@@ -1,3 +1,7 @@
+---
+description: "Structs & Classes Basics — Swift gives you two ways to bundle data and behavior: struct (a value type) and class (a reference type). Apple's own guidance…"
+---
+
 # 07 · Structs & Classes Basics
 
 Swift gives you two ways to bundle data and behavior: `struct` (a **value
@@ -184,6 +188,12 @@ kinds compile to genuinely different machine-level behavior:
   trivially prove the exact field layout needed; classes never get this for free
   because inheritance means the "complete" set of fields isn't knowable purely
   from the class's own declaration.
+
+## 🔀 See this in another language
+
+- [Kotlin — Collections](https://sigilipelli.github.io/kotlin-mastery-path/level-1/07-collections/)
+- [Shell/Bash — Pipes & Redirection](https://sigilipelli.github.io/shell-mastery-path/level-1/07-pipes-redirection/)
+- [C — Structs](https://sigilipelli.github.io/c-mastery-path/level-1/07-structs/)
 
 ## Exercise
 

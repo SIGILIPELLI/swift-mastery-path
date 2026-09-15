@@ -1,3 +1,7 @@
+---
+description: "Databases — Server-side and even command-line Swift programs frequently need to persist structured data. This module uses SQLite through Swift's bundled…"
+---
+
 # 03 · Databases
 
 Server-side and even command-line Swift programs frequently need to persist

@@ -1,3 +1,7 @@
+---
+description: "Project — CLI To-Do App — A small end-to-end project combining everything from Level 1: structs, enums, optionals, closures, collections, and control flow."
+---
+
 # 10 · Project — CLI To-Do App
 
 A small end-to-end project combining everything from Level 1: structs,
@@ -248,3 +252,9 @@ realistic CLI tool.
   `filter`.
 
 Completing this project means you're ready for **Level 2 · Intermediate**.
+
+## 🔀 See this in another language
+
+- [Kotlin — Project — CLI To-Do App](https://sigilipelli.github.io/kotlin-mastery-path/level-1/10-project-todo-app/)
+- [Shell/Bash — Project — Backup Script](https://sigilipelli.github.io/shell-mastery-path/level-1/10-project-backup-script/)
+- [C — Project — CLI Contact Book](https://sigilipelli.github.io/c-mastery-path/level-1/10-project-contact-book/)

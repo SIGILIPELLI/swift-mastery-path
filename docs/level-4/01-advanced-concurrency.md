@@ -1,3 +1,7 @@
+---
+description: "Advanced Concurrency — Level 3 covered async/await, Task, async let, and actors. This module goes further: streaming values over time with AsyncSequence…"
+---
+
 # 01 · Advanced Concurrency
 
 Level 3 covered `async`/`await`, `Task`, `async let`, and actors. This

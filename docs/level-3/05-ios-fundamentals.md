@@ -1,3 +1,7 @@
+---
+description: "iOS Fundamentals — This module covers the core building blocks of an iOS app: the app lifecycle, view controllers, Auto Layout, and navigation. iOS code…"
+---
+
 # 05 · iOS Fundamentals
 
 This module covers the core building blocks of an iOS app: the app

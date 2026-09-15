@@ -1,3 +1,7 @@
+---
+description: "Performance at Scale — Level 3's performance module covered per-call micro-optimizations (reserveCapacity, Set vs Array). This module is about performance…"
+---
+
 # 07 · Performance at Scale
 
 Level 3's performance module covered per-call micro-optimizations

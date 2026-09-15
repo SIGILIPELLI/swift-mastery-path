@@ -1,3 +1,7 @@
+---
+description: "Project — REST API + Database Service — This capstone for Level 3 combines Module 01 (concurrency), Module 03 (databases), and Module 08's copy-on-write…"
+---
+
 # 10 · Project — REST API + Database Service
 
 This capstone for Level 3 combines Module 01 (concurrency), Module 03

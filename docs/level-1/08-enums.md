@@ -1,3 +1,7 @@
+---
+description: "Enums — Swift enums are far more capable than a simple list of named constants — they can carry associated data per case, have methods, conform to…"
+---
+
 # 08 · Enums
 
 Swift enums are far more capable than a simple list of named constants —
@@ -208,6 +212,12 @@ the same mechanism a class provides implicitly, opted into per-case.
 which is also why `if let` and `switch` work uniformly across `Optional`
 and your own enums; they're the same runtime shape, not special-cased
 syntax.
+
+## 🔀 See this in another language
+
+- [Kotlin — Data Classes](https://sigilipelli.github.io/kotlin-mastery-path/level-1/08-data-classes/)
+- [Shell/Bash — Basic Text Processing](https://sigilipelli.github.io/shell-mastery-path/level-1/08-text-processing/)
+- [C — File I/O](https://sigilipelli.github.io/c-mastery-path/level-1/08-file-io/)
 
 ## Exercise
 

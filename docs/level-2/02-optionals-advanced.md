@@ -1,3 +1,7 @@
+---
+description: "Optionals Advanced — Level 1 introduced Optional as Swift's answer to 'this value might be missing,' along with if let and basic unwrapping. In real code…"
+---
+
 # 02 · Optionals Advanced
 
 Level 1 introduced `Optional` as Swift's answer to "this value might be

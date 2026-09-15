@@ -1,3 +1,7 @@
+---
+description: "Optionals Basics — In many languages, any reference can silently be null, and the compiler doesn't remind you to check. Swift makes the possible absence…"
+---
+
 # 05 · Optionals Basics
 
 ## The problem optionals solve
@@ -164,6 +168,12 @@ print(window.count)   // used directly, no "!" or "?" needed -- 11
   only evaluated (lazily) when the left side is actually `.none` — that's why
   `value ?? expensiveFallback()` doesn't pay for `expensiveFallback()` on the
   happy path.
+
+## 🔀 See this in another language
+
+- [Kotlin — Classes & Objects Basics](https://sigilipelli.github.io/kotlin-mastery-path/level-1/05-classes-objects/)
+- [Shell/Bash — Functions & Arguments](https://sigilipelli.github.io/shell-mastery-path/level-1/05-functions-arguments/)
+- [C — Arrays & Strings](https://sigilipelli.github.io/c-mastery-path/level-1/05-arrays-strings/)
 
 ## Exercise
 

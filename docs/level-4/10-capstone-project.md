@@ -1,3 +1,7 @@
+---
+description: "Capstone Project — This capstone combines nearly every module from Levels 3 and 4 into one working service: a signed, authenticated REST API backed by…"
+---
+
 # 10 · Capstone Project
 
 This capstone combines nearly every module from Levels 3 and 4 into one

@@ -1,3 +1,7 @@
+---
+description: "Error Handling — Optionals model 'a value might be missing.' Swift's error handling models something different: 'this operation might fail, and I want to…"
+---
+
 # 03 · Error Handling
 
 Optionals model "a value might be missing." Swift's error handling models

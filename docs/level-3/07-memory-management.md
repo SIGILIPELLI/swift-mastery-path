@@ -1,3 +1,7 @@
+---
+description: "Memory Management — Swift manages memory for class instances with Automatic Reference Counting (ARC): every strong reference bumps a retain count, and an…"
+---
+
 # 07 · Memory Management
 
 Swift manages memory for class instances with Automatic Reference Counting

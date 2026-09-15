@@ -1,3 +1,7 @@
+---
+description: "Testing with XCTest — Every module so far has verified code by eyeballing print output. That doesn't scale — once a project has more than a handful of…"
+---
+
 # 06 · Testing with XCTest
 
 Every module so far has verified code by eyeballing `print` output. That

@@ -1,3 +1,7 @@
+---
+description: "Building Server-Side APIs (Vapor) — Vapor is Swift's most widely used server-side web framework: a routing layer, a Codable-based request/response…"
+---
+
 # 02 · Building Server-Side APIs (Vapor)
 
 Vapor is Swift's most widely used server-side web framework: a routing

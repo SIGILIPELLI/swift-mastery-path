@@ -1,3 +1,7 @@
+---
+description: "App Architecture Patterns — Beyond individual design patterns (Level 3, Module 04), a whole app needs a consistent shape: where business logic lives, how…"
+---
+
 # 09 · App Architecture Patterns
 
 Beyond individual design patterns (Level 3, Module 04), a whole app needs a

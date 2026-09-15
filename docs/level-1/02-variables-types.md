@@ -1,3 +1,7 @@
+---
+description: "Variables & Types — Swift distinguishes constants from variables at the language level, and defaults to immutability — you opt into mutability, not the…"
+---
+
 # 02 · Variables & Types
 
 ## `let` vs `var`
@@ -150,6 +154,12 @@ different capabilities on the same storage:
   `"\(name)"` desugars into a sequence of `appendLiteral` / `appendInterpolation`
   calls building a `String.StringInterpolation` buffer, not naive string
   concatenation.
+
+## 🔀 See this in another language
+
+- [Kotlin — Variables & Types](https://sigilipelli.github.io/kotlin-mastery-path/level-1/02-variables-types/)
+- [Shell/Bash — Variables & Data Types](https://sigilipelli.github.io/shell-mastery-path/level-1/02-variables-data-types/)
+- [C — Variables, Data Types & Operators](https://sigilipelli.github.io/c-mastery-path/level-1/02-variables-data-types/)
 
 ## Exercise
 

@@ -1,3 +1,7 @@
+---
+description: "Project — Weather CLI — The Level 2 capstone project: a command-line tool that fetches real, live weather data from a public API and prints a short report…"
+---
+
 # 10 · Project — Weather CLI
 
 The Level 2 capstone project: a command-line tool that fetches **real, live

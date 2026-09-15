@@ -1,3 +1,7 @@
+---
+description: "Collections — Swift has three primary collection types, all value types: Array (ordered), Set (unordered, unique elements), and Dictionary (key-value…"
+---
+
 # 06 · Collections
 
 Swift has three primary collection types, all **value types**: `Array`
@@ -166,6 +170,12 @@ hash function distributes poorly. This is also the mechanical reason
 iteration order is unspecified: it reflects bucket layout, not insertion
 order, and can change across insertions/removals or even across process
 runs due to the random seed.
+
+## 🔀 See this in another language
+
+- [Kotlin — Null Safety Basics](https://sigilipelli.github.io/kotlin-mastery-path/level-1/06-null-safety/)
+- [Shell/Bash — Working with Files & Directories](https://sigilipelli.github.io/shell-mastery-path/level-1/06-files-directories/)
+- [C — Pointers Basics](https://sigilipelli.github.io/c-mastery-path/level-1/06-pointers-basics/)
 
 ## Exercise
 

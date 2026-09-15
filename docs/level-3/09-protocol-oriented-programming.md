@@ -1,3 +1,7 @@
+---
+description: "Protocol-Oriented Programming — Swift is often described as protocol-oriented rather than purely object-oriented: protocols with default implementations…"
+---
+
 # 09 · Protocol-Oriented Programming
 
 Swift is often described as protocol-oriented rather than purely

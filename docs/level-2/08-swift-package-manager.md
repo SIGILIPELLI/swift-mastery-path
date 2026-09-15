@@ -1,3 +1,7 @@
+---
+description: "Swift Package Manager — Every project so far has been a single .swift file compiled directly with swiftc. That works for small scripts, but real projects…"
+---
+
 # 08 · Swift Package Manager
 
 Every project so far has been a single `.swift` file compiled directly with

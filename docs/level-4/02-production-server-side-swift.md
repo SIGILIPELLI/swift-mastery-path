@@ -1,3 +1,7 @@
+---
+description: "Production Server-Side Swift — Getting a server-side Swift app running (Level 3, Module 02) is different from getting it production-ready: structured…"
+---
+
 # 02 · Production Server-Side Swift
 
 Getting a server-side Swift app *running* (Level 3, Module 02) is different

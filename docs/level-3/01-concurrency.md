@@ -1,3 +1,7 @@
+---
+description: "Concurrency — Swift's structured concurrency (async/await, Task, actors) replaces the old world of completion handlers and manual queue-hopping with code…"
+---
+
 # 01 · Concurrency
 
 Swift's structured concurrency (`async`/`await`, `Task`, actors) replaces the

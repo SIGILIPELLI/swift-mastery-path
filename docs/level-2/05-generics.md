@@ -1,3 +1,7 @@
+---
+description: "Generics — You've already been using generics without necessarily calling them that — Array, Optional, and Dictionary are all generic types from the…"
+---
+
 # 05 · Generics
 
 You've already been using generics without necessarily calling them that —

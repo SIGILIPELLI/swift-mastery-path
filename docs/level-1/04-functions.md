@@ -1,3 +1,7 @@
+---
+description: "Functions — Swift functions have two names per parameter: an argument label used at the call site, and a parameter name used inside the function body. By…"
+---
+
 # 04 · Functions
 
 ## Basic declaration
@@ -175,6 +179,12 @@ print(op(10, 4))   // 14
   which is exactly the same representation a closure uses (see the closures
   chapter). A plain top-level function just happens to have a null context
   pointer.
+
+## 🔀 See this in another language
+
+- [Kotlin — Functions](https://sigilipelli.github.io/kotlin-mastery-path/level-1/04-functions/)
+- [Shell/Bash — Loops](https://sigilipelli.github.io/shell-mastery-path/level-1/04-loops/)
+- [C — Functions](https://sigilipelli.github.io/c-mastery-path/level-1/04-functions/)
 
 ## Exercise
 

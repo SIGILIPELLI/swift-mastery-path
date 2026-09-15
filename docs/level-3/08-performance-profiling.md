@@ -1,3 +1,7 @@
+---
+description: "Performance & Profiling — Most performance problems in Swift come from a handful of repeat offenders: unnecessary array growth, string concatenation in a…"
+---
+
 # 08 · Performance & Profiling
 
 Most performance problems in Swift come from a handful of repeat offenders:

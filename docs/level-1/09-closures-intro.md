@@ -1,3 +1,7 @@
+---
+description: "Closures Intro — A closure is a self-contained block of functionality that can be passed around and called later — in fact, every function you've written…"
+---
+
 # 09 · Closures Intro
 
 A closure is a self-contained block of functionality that can be passed
@@ -150,6 +154,12 @@ print(hottest)   // 100
   `DispatchQueue`).
 - Trailing closure syntax (`array.map { ... }`) is pure syntax sugar resolved at
   parse time — it has zero runtime distinction from `array.map({ ... })`.
+
+## 🔀 See this in another language
+
+- [Kotlin — Extension Functions Intro](https://sigilipelli.github.io/kotlin-mastery-path/level-1/09-extension-functions/)
+- [Shell/Bash — Exit Codes & Basic Error Handling](https://sigilipelli.github.io/shell-mastery-path/level-1/09-exit-codes-error-handling/)
+- [C — Preprocessor & Multi-file Compilation](https://sigilipelli.github.io/c-mastery-path/level-1/09-preprocessor-multifile/)
 
 ## Exercise
 

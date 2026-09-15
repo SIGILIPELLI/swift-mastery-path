@@ -1,3 +1,7 @@
+---
+description: "Testing Advanced — Level 2 covered basic XCTest assertions. This module covers the patterns that make tests trustworthy in larger codebases: dependency…"
+---
+
 # 06 · Testing Advanced
 
 Level 2 covered basic `XCTest` assertions. This module covers the patterns

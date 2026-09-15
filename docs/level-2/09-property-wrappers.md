@@ -1,3 +1,7 @@
+---
+description: "Property Wrappers Intro — Property wrappers let you extract a repeated piece of 'get/set' behavior — validation, clamping, storage tricks — into a…"
+---
+
 # 09 · Property Wrappers Intro
 
 Property wrappers let you extract a repeated piece of "get/set" behavior —

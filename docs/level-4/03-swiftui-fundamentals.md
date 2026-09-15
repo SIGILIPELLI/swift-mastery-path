@@ -1,3 +1,7 @@
+---
+description: "SwiftUI Fundamentals — Level 3's iOS Fundamentals module covered the app lifecycle and touched SwiftUI's NavigationStack. This module goes deeper into…"
+---
+
 # 03 · SwiftUI Fundamentals
 
 Level 3's iOS Fundamentals module covered the app lifecycle and touched

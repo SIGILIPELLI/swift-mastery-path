@@ -1,3 +1,7 @@
+---
+description: "Setup & First Program — Swift ships built-in on macOS via Xcode (or the smaller Xcode Command Line Tools), and is available as a standalone toolchain on…"
+---
+
 # 01 · Setup & First Program
 
 ## Install the Swift toolchain
@@ -123,6 +127,12 @@ together before a single instruction executes:
   marker; since Swift 5, the compiler emits code that talks to a fixed runtime ABI
   baked into the OS, which is why apps don't have to bundle the whole Swift runtime
   themselves on modern OS versions (it ships in the OS instead).
+
+## 🔀 See this in another language
+
+- [Kotlin — Setup & First Program](https://sigilipelli.github.io/kotlin-mastery-path/level-1/01-setup/)
+- [Shell/Bash — Setup & First Script](https://sigilipelli.github.io/shell-mastery-path/level-1/01-setup/)
+- [C — Setup & First Program](https://sigilipelli.github.io/c-mastery-path/level-1/01-setup/)
 
 ## Exercise
 

@@ -1,3 +1,7 @@
+---
+description: "Control Flow — Unlike C-family languages, Swift requires the condition to be a Bool — there's no implicit conversion from Int to Bool, so if temperature…"
+---
+
 # 03 · Control Flow
 
 ## `if` / `else`
@@ -201,6 +205,12 @@ instead of only the innermost one.
 - **`where` clauses** on `for-in` and `switch` are evaluated per-iteration as a
   plain boolean guard inserted into the generated branch — they don't change the
   iteration strategy at all, they just add a skip test.
+
+## 🔀 See this in another language
+
+- [Kotlin — Control Flow](https://sigilipelli.github.io/kotlin-mastery-path/level-1/03-control-flow/)
+- [Shell/Bash — Control Flow](https://sigilipelli.github.io/shell-mastery-path/level-1/03-control-flow/)
+- [C — Control Flow](https://sigilipelli.github.io/c-mastery-path/level-1/03-control-flow/)
 
 ## Exercise
 

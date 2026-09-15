@@ -1,3 +1,7 @@
+---
+description: "OOP Deep Dive — Level 1 introduced structs and classes as two ways to bundle data and behavior. This module goes deeper into how Swift actually does…"
+---
+
 # 01 · OOP Deep Dive
 
 Level 1 introduced structs and classes as two ways to bundle data and

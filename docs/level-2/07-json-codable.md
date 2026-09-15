@@ -1,3 +1,7 @@
+---
+description: "Working with JSON — Nearly every real app talks to the outside world through JSON — API responses, config files, saved state. Swift's Codable protocol…"
+---
+
 # 07 · Working with JSON
 
 Nearly every real app talks to the outside world through JSON — API

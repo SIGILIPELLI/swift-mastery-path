@@ -1,3 +1,7 @@
+---
+description: "Design Patterns in Swift — Classic object-oriented design patterns still apply in Swift, but Swift's value types, protocols, and closures often give you a…"
+---
+
 # 04 · Design Patterns in Swift
 
 Classic object-oriented design patterns still apply in Swift, but Swift's
