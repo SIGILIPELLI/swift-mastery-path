@@ -182,9 +182,9 @@ print(op(10, 4))   // 14
 
 ## 🔀 See this in another language
 
-- [Kotlin — Functions](https://sigilipelli.github.io/kotlin-mastery-path/level-1/04-functions/)
-- [Shell/Bash — Loops](https://sigilipelli.github.io/shell-mastery-path/level-1/04-loops/)
-- [C — Functions](https://sigilipelli.github.io/c-mastery-path/level-1/04-functions/)
+- [Kotlin — Functions](https://learnmasterypath.com/kotlin-mastery-path/level-1/04-functions/)
+- [Shell/Bash — Loops](https://learnmasterypath.com/shell-mastery-path/level-1/04-loops/)
+- [C — Functions](https://learnmasterypath.com/c-mastery-path/level-1/04-functions/)
 
 ## Exercise
 

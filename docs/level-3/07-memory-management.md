@@ -259,7 +259,7 @@ that line would never appear.
 
 ## 🔀 See this in another language
 
-- [C — 05 · Memory Management Deep Dive](https://sigilipelli.github.io/c-mastery-path/level-3/05-memory-management-deep-dive/)
+- [C — 05 · Memory Management Deep Dive](https://learnmasterypath.com/c-mastery-path/level-3/05-memory-management-deep-dive/)
 
 ## Exercise
 

@@ -157,9 +157,9 @@ print(hottest)   // 100
 
 ## 🔀 See this in another language
 
-- [Kotlin — Extension Functions Intro](https://sigilipelli.github.io/kotlin-mastery-path/level-1/09-extension-functions/)
-- [Shell/Bash — Exit Codes & Basic Error Handling](https://sigilipelli.github.io/shell-mastery-path/level-1/09-exit-codes-error-handling/)
-- [C — Preprocessor & Multi-file Compilation](https://sigilipelli.github.io/c-mastery-path/level-1/09-preprocessor-multifile/)
+- [Kotlin — Extension Functions Intro](https://learnmasterypath.com/kotlin-mastery-path/level-1/09-extension-functions/)
+- [Shell/Bash — Exit Codes & Basic Error Handling](https://learnmasterypath.com/shell-mastery-path/level-1/09-exit-codes-error-handling/)
+- [C — Preprocessor & Multi-file Compilation](https://learnmasterypath.com/c-mastery-path/level-1/09-preprocessor-multifile/)
 
 ## Exercise
 

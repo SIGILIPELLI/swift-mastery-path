@@ -157,9 +157,9 @@ different capabilities on the same storage:
 
 ## 🔀 See this in another language
 
-- [Kotlin — Variables & Types](https://sigilipelli.github.io/kotlin-mastery-path/level-1/02-variables-types/)
-- [Shell/Bash — Variables & Data Types](https://sigilipelli.github.io/shell-mastery-path/level-1/02-variables-data-types/)
-- [C — Variables, Data Types & Operators](https://sigilipelli.github.io/c-mastery-path/level-1/02-variables-data-types/)
+- [Kotlin — Variables & Types](https://learnmasterypath.com/kotlin-mastery-path/level-1/02-variables-types/)
+- [Shell/Bash — Variables & Data Types](https://learnmasterypath.com/shell-mastery-path/level-1/02-variables-data-types/)
+- [C — Variables, Data Types & Operators](https://learnmasterypath.com/c-mastery-path/level-1/02-variables-data-types/)
 
 ## Exercise
 

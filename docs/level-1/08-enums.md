@@ -215,9 +215,9 @@ syntax.
 
 ## 🔀 See this in another language
 
-- [Kotlin — Data Classes](https://sigilipelli.github.io/kotlin-mastery-path/level-1/08-data-classes/)
-- [Shell/Bash — Basic Text Processing](https://sigilipelli.github.io/shell-mastery-path/level-1/08-text-processing/)
-- [C — File I/O](https://sigilipelli.github.io/c-mastery-path/level-1/08-file-io/)
+- [Kotlin — Data Classes](https://learnmasterypath.com/kotlin-mastery-path/level-1/08-data-classes/)
+- [Shell/Bash — Basic Text Processing](https://learnmasterypath.com/shell-mastery-path/level-1/08-text-processing/)
+- [C — File I/O](https://learnmasterypath.com/c-mastery-path/level-1/08-file-io/)
 
 ## Exercise
 

@@ -173,9 +173,9 @@ runs due to the random seed.
 
 ## 🔀 See this in another language
 
-- [Kotlin — Null Safety Basics](https://sigilipelli.github.io/kotlin-mastery-path/level-1/06-null-safety/)
-- [Shell/Bash — Working with Files & Directories](https://sigilipelli.github.io/shell-mastery-path/level-1/06-files-directories/)
-- [C — Pointers Basics](https://sigilipelli.github.io/c-mastery-path/level-1/06-pointers-basics/)
+- [Kotlin — Null Safety Basics](https://learnmasterypath.com/kotlin-mastery-path/level-1/06-null-safety/)
+- [Shell/Bash — Working with Files & Directories](https://learnmasterypath.com/shell-mastery-path/level-1/06-files-directories/)
+- [C — Pointers Basics](https://learnmasterypath.com/c-mastery-path/level-1/06-pointers-basics/)
 
 ## Exercise
 

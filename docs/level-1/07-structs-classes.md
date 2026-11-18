@@ -191,9 +191,9 @@ kinds compile to genuinely different machine-level behavior:
 
 ## 🔀 See this in another language
 
-- [Kotlin — Collections](https://sigilipelli.github.io/kotlin-mastery-path/level-1/07-collections/)
-- [Shell/Bash — Pipes & Redirection](https://sigilipelli.github.io/shell-mastery-path/level-1/07-pipes-redirection/)
-- [C — Structs](https://sigilipelli.github.io/c-mastery-path/level-1/07-structs/)
+- [Kotlin — Collections](https://learnmasterypath.com/kotlin-mastery-path/level-1/07-collections/)
+- [Shell/Bash — Pipes & Redirection](https://learnmasterypath.com/shell-mastery-path/level-1/07-pipes-redirection/)
+- [C — Structs](https://learnmasterypath.com/c-mastery-path/level-1/07-structs/)
 
 ## Exercise
 

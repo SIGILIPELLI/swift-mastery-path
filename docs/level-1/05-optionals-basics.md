@@ -171,9 +171,9 @@ print(window.count)   // used directly, no "!" or "?" needed -- 11
 
 ## 🔀 See this in another language
 
-- [Kotlin — Classes & Objects Basics](https://sigilipelli.github.io/kotlin-mastery-path/level-1/05-classes-objects/)
-- [Shell/Bash — Functions & Arguments](https://sigilipelli.github.io/shell-mastery-path/level-1/05-functions-arguments/)
-- [C — Arrays & Strings](https://sigilipelli.github.io/c-mastery-path/level-1/05-arrays-strings/)
+- [Kotlin — Classes & Objects Basics](https://learnmasterypath.com/kotlin-mastery-path/level-1/05-classes-objects/)
+- [Shell/Bash — Functions & Arguments](https://learnmasterypath.com/shell-mastery-path/level-1/05-functions-arguments/)
+- [C — Arrays & Strings](https://learnmasterypath.com/c-mastery-path/level-1/05-arrays-strings/)
 
 ## Exercise
 

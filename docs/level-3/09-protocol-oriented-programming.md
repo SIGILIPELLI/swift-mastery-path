@@ -247,7 +247,7 @@ Hello from Int
 
 ## 🔀 See this in another language
 
-- [MATLAB — 01 · Object-Oriented Programming in MATLAB](https://sigilipelli.github.io/matlab-mastery-path/level-3/01-oop-matlab/)
+- [MATLAB — 01 · Object-Oriented Programming in MATLAB](https://learnmasterypath.com/matlab-mastery-path/level-3/01-oop-matlab/)
 
 ## Exercise
 

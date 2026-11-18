@@ -130,9 +130,9 @@ together before a single instruction executes:
 
 ## 🔀 See this in another language
 
-- [Kotlin — Setup & First Program](https://sigilipelli.github.io/kotlin-mastery-path/level-1/01-setup/)
-- [Shell/Bash — Setup & First Script](https://sigilipelli.github.io/shell-mastery-path/level-1/01-setup/)
-- [C — Setup & First Program](https://sigilipelli.github.io/c-mastery-path/level-1/01-setup/)
+- [Kotlin — Setup & First Program](https://learnmasterypath.com/kotlin-mastery-path/level-1/01-setup/)
+- [Shell/Bash — Setup & First Script](https://learnmasterypath.com/shell-mastery-path/level-1/01-setup/)
+- [C — Setup & First Program](https://learnmasterypath.com/c-mastery-path/level-1/01-setup/)
 
 ## Exercise
 
