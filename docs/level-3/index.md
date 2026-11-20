@@ -1,3 +1,7 @@
+---
+description: "Level 3 (Advanced) of the free Swift Mastery Path: Concurrency, Building Server-Side APIs (Vapor), Databases, Design Patterns in Swift, iOS Fundamentals…"
+---
+
 # Level 3 · Advanced <span class="level-badge">Systems & Services</span>
 
 ## Modules

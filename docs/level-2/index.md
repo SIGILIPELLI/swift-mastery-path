@@ -1,3 +1,7 @@
+---
+description: "Level 2 (Intermediate) of the free Swift Mastery Path: OOP Deep Dive, Optionals Advanced, Error Handling, Closures Advanced, Generics, Testing with XCTest…"
+---
+
 # Level 2 · Intermediate <span class="level-badge">Idiomatic Swift</span>
 
 ## Modules

@@ -1,3 +1,7 @@
+---
+description: "Level 4 (Master) of the free Swift Mastery Path: Advanced Concurrency, Production Server-Side Swift, SwiftUI Fundamentals, Security Best Practices, Testing…"
+---
+
 # Level 4 · Master <span class="level-badge">Production Engineering</span>
 
 ## Modules
