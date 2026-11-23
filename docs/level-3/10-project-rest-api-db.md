@@ -320,6 +320,6 @@ the following `GET` reflects.
 
 ## 🔀 See this in another language
 
-- [Java — 11 · Project — REST API + Database CRUD Service](https://learnmasterypath.com/java-mastery-path/level-3/11-project-rest-api-db/)
+- [Java — 11 · Project — REST API + Database CRUD Service](https://learnmasterypath.com/java-mastery-path/level-3/10-project-rest-api-db/)
 - [Kotlin — 10 · Project — REST API + Database Service](https://learnmasterypath.com/kotlin-mastery-path/level-3/10-project-rest-api-db/)
 - [Scala — 10 · Project — REST API + Database Service](https://learnmasterypath.com/scala-mastery-path/level-3/10-project-rest-api-db/)
